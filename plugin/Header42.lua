@@ -1,4 +1,4 @@
-local main = require("srcs.main")
+local main = require("main")
 local cmd = vim.api.nvim_create_user_command
 
 cmd('Header42',
