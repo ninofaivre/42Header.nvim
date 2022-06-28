@@ -1,3 +1,4 @@
+local M = {}
 local user = vim.g.user42
 if (not user) then
 	user = "marvin"
@@ -34,7 +35,7 @@ local function isThereAHeader ()
 	return true
 end
 
-local function main ()
+M.main = function ()
 	local fileName = vim.fn.expand("%")
 	local timestamp = os.date("%Y/%m/%d %H:%H:%S")
 	local header =
@@ -59,3 +60,5 @@ local function main ()
 		vim.api.nvim_buf_set_lines(0, 8, 11, false, { unpack(header, 9, 11) })
 	end
 end
+
+return M
