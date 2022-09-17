@@ -36,7 +36,7 @@ local function isThereAHeader ()
 end
 
 M.main = function ()
-	local fileName = vim.fn.expand("%")
+	local fileName = vim.fn.expand("%:t")
 	local timestamp = os.date("%Y/%m/%d %H:%H:%S")
 	local header =
 	{
