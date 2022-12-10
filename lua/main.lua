@@ -1,17 +1,33 @@
 local M = {}
+
 local user = vim.g.user42
 if (not user) then
 	user = "marvin"
 end
+
+local countryCode = vim.g.countryCode
+if (not countryCode or #countryCode ~= 2) then
+	countryCode = "fr"
+end
+
+local width = 80
+
 local logo =
 {
-	"        :::      ::::::::",
-	"      :+:      :+:    :+:",
-	"    +:+ +:+         +:+  ",
-	"  +#+  +:+       +#+     ",
-	"+#+#+#+#+#+   +#+        ",
-	"     #+#    #+#          ",
-	"    ###   ########.fr    "
+	"        :::      ::::::::    ",
+	"      :+:      :+:    :+:    ",
+	"    +:+ +:+         +:+      ",
+	"  +#+  +:+       +#+         ",
+	"+#+#+#+#+#+   +#+            ",
+	"     #+#    #+#              ",
+	"    ###   ########." .. countryCode .. "        "
+}
+
+local comment =
+{
+	c = { start = "/*", fill = "*", ["end"] = "*/" }, cpp = c,
+	h = c, hpp = cpp,
+	lua = {start = "--[[", fill = "-", ["end"] = "]]--"}
 }
 
 local function isThereAHeader ()
@@ -38,19 +54,21 @@ end
 M.main = function ()
 	local fileName = vim.fn.expand("%:t")
 	local timestamp = os.date("%Y/%m/%d %H:%H:%S")
+	local comm = comment[vim.fn.expand("%:e")] --{ start = "/*", fill = "*", ["end"] = "*/" }
+	local bothCommLen = #comm["start"] + #comm["end"]
 	local header =
 	{
-	"/* " .. string.rep("*", 74) .. " */",
-	"/*" .. string.rep(" ", 76) .. "*/",
-	"/*" .. string.rep(" ", 47) .. logo[1] .. "    */",
-	"/*   " .. fileName .. string.rep(" ", (44 - string.len(fileName))) .. logo[2] .. "    */",
-	"/*" .. string.rep(" ", 47) .. logo[3] .. "    */",
-	"/*   By: " .. user .. " <" .. user .. "@student.42.fr>" .. string.rep(" ", (23 - (2 * string.len(user)))) .. logo[4] .. "    */",
-	"/*" .. string.rep(" ", 47) .. logo[5] .. "    */",
-	"/*   Created: " .. timestamp .. " by " .. user .. string.rep(" ", (31 - string.len(timestamp) - string.len(user))) .. logo[6] .. "    */",
-	"/*   Updated: " .. timestamp .. " by " .. user .. string.rep(" ", (31 - string.len(timestamp) - string.len(user))) .. logo[7] .. "    */",
-	"/*" .. string.rep(" ", 76) .. "*/",
-	"/* " .. string.rep("*", 74) .. " */"
+		comm["start"] .. " " .. string.rep(comm["fill"], width - (bothCommLen + 2)) .. " " .. comm["end"],
+		comm["start"] .. string.rep(" ", width - bothCommLen) .. comm["end"],
+		comm["start"] .. string.rep(" ", width - (#logo[1] + bothCommLen)) .. logo[1] .. comm["end"],
+		comm["start"] .. "   " .. fileName .. string.rep(" ", width - (#logo[2] + #fileName + bothCommLen + 3)) .. logo[2] .. comm["end"],
+		comm["start"] .. string.rep(" ", width - (#logo[3] + bothCommLen)) .. logo[3] .. comm["end"],
+		comm["start"] .. "   By: " .. user .. " <" .. user .. "@student.42." .. countryCode .. ">" .. string.rep(" ", (width - (#logo[4] + #user * 2 + #countryCode + bothCommLen + 22))) .. logo[4] .. comm["end"],
+		comm["start"] .. string.rep(" ", width - (#logo[5] + bothCommLen)) .. logo[5] .. comm["end"],
+		comm["start"].. "   Created: " .. timestamp .. " by " .. user .. string.rep(" ", width - (#logo[6] + #timestamp + #user + bothCommLen + 16)) .. logo[6] .. comm["end"],
+		comm["start"] .. "   Updated: " .. timestamp .. " by " .. user .. string.rep(" ", width - (#logo[7] + #timestamp + #user + bothCommLen + 16)) .. logo[7] .. comm["end"],
+		comm["start"] .. string.rep(" ", width - bothCommLen) .. comm["end"],
+		comm["start"] .. " " .. string.rep(comm["fill"], width - (bothCommLen + 2)) .. " " .. comm["end"]
 	}
 
 	if (not isThereAHeader()) then
