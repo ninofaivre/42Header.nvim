@@ -1,16 +1,16 @@
 local M = {}
 
-local user = vim.g.user42
-if (not user) then
-	user = "marvin"
-end
+-- TODO
+-- real time global var usage update
+-- check for max-length
+--
+local user = vim.g.user42 or "marvin"
+local width = vim.g.Header42Width or 80
 
-local countryCode = vim.g.countryCode
-if (not countryCode or #countryCode ~= 2) then
+local countryCode = vim.g.countryCode or "fr"
+if (#countryCode ~= 2) then
 	countryCode = "fr"
 end
-
-local width = 80
 
 local logo =
 {
@@ -23,12 +23,25 @@ local logo =
 	"    ###   ########." .. countryCode .. "        "
 }
 
-local comment =
+local commentTable =
 {
-	c = { start = "/*", fill = "*", ["end"] = "*/" }, cpp = c,
-	h = c, hpp = cpp,
-	lua = {start = "--[[", fill = "-", ["end"] = "]]--"}
+	c = { start = "/*", fill = "*", ["end"] = "*/" }, h = c,
+	cpp = c, hpp = cpp,
+	lua = { start = "--[[", fill = "-", ["end"] = "]]--" },
+	default = { start = "#", fill = "#", ["end"] = "#" },
+	sh = default,
+	bash = default,
+	html = { start = "<!--", fill = "-", ["end"] = "-->"}
 }
+
+-- need a bit more protection
+if (vim.g.commentTable) then
+	for k, v in pairs(vim.g.commentTable) do
+		if (v["start"] and v["fill"] and v["end"]) then
+			commentTable[k] = v
+		end
+	end
+end
 
 local function isThereAHeader ()
 	local oldHeader = vim.api.nvim_buf_get_lines(0, 0, 11, false)
@@ -42,39 +55,38 @@ local function isThereAHeader ()
 		if (not a or not b) then
 			return false
 		end
-		a = a - 50
-		b = b - 50
-		if (a ~= 0 or b ~= 24) then
-			return false
-		end
 	end
 	return true
 end
 
 M.main = function ()
 	local fileName = vim.fn.expand("%:t")
-	local timestamp = os.date("%Y/%m/%d %H:%H:%S")
-	local comm = comment[vim.fn.expand("%:e")] --{ start = "/*", fill = "*", ["end"] = "*/" }
-	local bothCommLen = #comm["start"] + #comm["end"]
+	local time = os.date("%Y/%m/%d %H:%H:%S")
+	local comment = commentTable[vim.fn.expand("%:e")] or commentTable["default"]
+	local SELen = #comment["start"] + #comment["end"]
 	local header =
 	{
-		comm["start"] .. " " .. string.rep(comm["fill"], width - (bothCommLen + 2)) .. " " .. comm["end"],
-		comm["start"] .. string.rep(" ", width - bothCommLen) .. comm["end"],
-		comm["start"] .. string.rep(" ", width - (#logo[1] + bothCommLen)) .. logo[1] .. comm["end"],
-		comm["start"] .. "   " .. fileName .. string.rep(" ", width - (#logo[2] + #fileName + bothCommLen + 3)) .. logo[2] .. comm["end"],
-		comm["start"] .. string.rep(" ", width - (#logo[3] + bothCommLen)) .. logo[3] .. comm["end"],
-		comm["start"] .. "   By: " .. user .. " <" .. user .. "@student.42." .. countryCode .. ">" .. string.rep(" ", (width - (#logo[4] + #user * 2 + #countryCode + bothCommLen + 22))) .. logo[4] .. comm["end"],
-		comm["start"] .. string.rep(" ", width - (#logo[5] + bothCommLen)) .. logo[5] .. comm["end"],
-		comm["start"].. "   Created: " .. timestamp .. " by " .. user .. string.rep(" ", width - (#logo[6] + #timestamp + #user + bothCommLen + 16)) .. logo[6] .. comm["end"],
-		comm["start"] .. "   Updated: " .. timestamp .. " by " .. user .. string.rep(" ", width - (#logo[7] + #timestamp + #user + bothCommLen + 16)) .. logo[7] .. comm["end"],
-		comm["start"] .. string.rep(" ", width - bothCommLen) .. comm["end"],
-		comm["start"] .. " " .. string.rep(comm["fill"], width - (bothCommLen + 2)) .. " " .. comm["end"]
+		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
+		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#logo[1] + SELen)) .. logo[1] .. comment["end"],
+		comment["start"] .. "   " .. fileName .. string.rep(" ", width - (#logo[2] + #fileName + SELen + 3)) .. logo[2] .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#logo[3] + SELen)) .. logo[3] .. comment["end"],
+		comment["start"] .. "   By: " .. user .. " <" .. user .. "@student.42." .. countryCode .. ">"
+			.. string.rep(" ", (width - (#logo[4] + #user * 2 + #countryCode + SELen + 22))) .. logo[4] .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#logo[5] + SELen)) .. logo[5] .. comment["end"],
+		comment["start"].. "   Created: " .. time .. " by " .. user .. string.rep(" ", width - (#logo[6] + #time + #user + SELen + 16)) .. logo[6] .. comment["end"],
+		comment["start"] .. "   Updated: " .. time .. " by " .. user .. string.rep(" ", width - (#logo[7] + #time + #user + SELen + 16)) .. logo[7] .. comment["end"],
+		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
+		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"]
 	}
 
 	if (not isThereAHeader()) then
 		vim.api.nvim_buf_set_lines(0, 0, 0, false, header)
 	else
 		vim.api.nvim_buf_set_lines(0, 0, 7, false, { unpack(header, 1, 7) })
+		-- TODO
+		-- override comm["start"] and comm["end"]
+		--
 		vim.api.nvim_buf_set_lines(0, 8, 11, false, { unpack(header, 9, 11) })
 	end
 end
