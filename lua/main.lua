@@ -36,8 +36,6 @@ local commentTable =
 	html = { start = "<!--", fill = "-", ["end"] = "-->"}
 }
 
-print (commentTable["cpp"]["start"])
-
 -- need a bit more protection
 if (vim.g.commentTable) then
 	for k, v in pairs(vim.g.commentTable) do
