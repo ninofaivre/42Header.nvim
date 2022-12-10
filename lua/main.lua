@@ -23,6 +23,7 @@ local logo =
 	"    ###   ########." .. countryCode .. "        "
 }
 
+a, b, c = {}
 local commentTable =
 {
 	c = { start = "/*", fill = "*", ["end"] = "*/" },
@@ -31,8 +32,8 @@ local commentTable =
 	hpp = { start = "/*", fill = "*", ["end"] = "*/" },
 	lua = { start = "--[[", fill = "-", ["end"] = "]]--" },
 	default = { start = "#", fill = "#", ["end"] = "#" },
-	sh = default,
-	bash = default,
+	sh = { start = "#", fill = "#", ["end"] = "#" },
+	bash = { start = "#", fill = "#", ["end"] = "#" },
 	html = { start = "<!--", fill = "-", ["end"] = "-->"}
 }
 
