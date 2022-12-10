@@ -25,14 +25,18 @@ local logo =
 
 local commentTable =
 {
-	c = { start = "/*", fill = "*", ["end"] = "*/" }, h = c,
-	cpp = c, hpp = cpp,
+	c = { start = "/*", fill = "*", ["end"] = "*/" },
+	h = { start = "/*", fill = "*", ["end"] = "*/" },
+	cpp = { start = "/*", fill = "*", ["end"] = "*/" },
+	hpp = { start = "/*", fill = "*", ["end"] = "*/" },
 	lua = { start = "--[[", fill = "-", ["end"] = "]]--" },
 	default = { start = "#", fill = "#", ["end"] = "#" },
 	sh = default,
 	bash = default,
 	html = { start = "<!--", fill = "-", ["end"] = "-->"}
 }
+
+print (commentTable["cpp"]["start"])
 
 -- need a bit more protection
 if (vim.g.commentTable) then
