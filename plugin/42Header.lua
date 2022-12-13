@@ -1,8 +1,8 @@
 local main = require("main")
 local cmd = vim.api.nvim_create_user_command
 
-cmd('Header42',
+cmd('42Header',
 function()
 	main.main()
 end,
-{desc = 'Header42'})
+{desc = '42Header'})
