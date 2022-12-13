@@ -160,6 +160,4 @@ M.main = function ()
 	end
 end
 
-M.main()
-
 return M
