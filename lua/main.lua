@@ -142,7 +142,7 @@ M.main = function ()
 		comment["start"] .. "   By: " .. topUser .. " <" .. mailUser .. "@" .. mailDomain .. ">"
 			.. string.rep(" ", (width - (#logo[4] + #topUser + #mailUser + #mailDomain + SELen + 11))) .. logo[4] .. comment["end"],
 		comment["start"] .. string.rep(" ", width - (#logo[5] + SELen)) .. logo[5] .. comment["end"],
-		comment["start"].. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#logo[6] + #time + #botUser + SELen + 16)) .. logo[6] .. comment["end"],
+		comment["start"] .. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#logo[6] + #time + #botUser + SELen + 16)) .. logo[6] .. comment["end"],
 		comment["start"] .. "   Updated: " .. time .. " by " .. botUser .. string.rep(" ", width - (#logo[7] + #time + #botUser + SELen + 16)) .. logo[7] .. comment["end"],
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
