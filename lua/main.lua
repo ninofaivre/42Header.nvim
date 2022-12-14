@@ -192,7 +192,7 @@ local function yank()
 		currentSettings = currentSettings .. 'vim.g["countryCode"] = "' .. countryCode .. '"\n'
 	end
 	if (width ~= 80) then
-		currentSettings = currentSettings .. 'vim.g["42HeaderWidth"] = "' .. width .. '"\n'
+		currentSettings = currentSettings .. 'vim.g["42HeaderWidth"] = ' .. width .. '\n'
 	end
 	if (userCommentTable) then
 		currentSettings = currentSettings
