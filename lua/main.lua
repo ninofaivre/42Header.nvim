@@ -1,27 +1,46 @@
---[[ ---------------------------------------------------------------------- ]]--
---[[                                                                        ]]--
---[[                                                   :::      ::::::::    ]]--
---[[   main.lua                                      :+:      :+:    :+:    ]]--
---[[                                               +:+ +:+         +:+      ]]--
---[[   By: nfaivree <nfaivre@student.42.fr>      +#+  +:+       +#+         ]]--
---[[                                           +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/13 12:07:46 by nfaivre      #+#    #+#              ]]--
---[[   Updated: 2022/12/13 12:08:25 by nfaivree    ###   ########.fr        ]]--
---[[                                                                        ]]--
---[[ ---------------------------------------------------------------------- ]]--
+-- ------------------------------------------------------------------------------------ <3
+--                                                                                      <3
+--                                                                 :::      ::::::::    <3
+--   main.lua                                                    :+:      :+:    :+:    <3
+--                                                             +:+ +:+         +:+      <3
+--   By: nfaivre <nfaivre@student.42.fr>                     +#+  +:+       +#+         <3
+--                                                         +#+#+#+#+#+   +#+            <3
+--   Created: 2022/12/13 12:07:46 by nfaivre                    #+#    #+#              <3
+--   Updated: 2022/12/15 00:13:38 by nfaivre                   ###   ########.zz        <3
+--                                                                                      <3
+-- ------------------------------------------------------------------------------------ <3
 local M = {}
 
 -- TODO
 -- let user set Header42Height and Header42Logo
--- reduce api call (get_buffer) in the isThereAHeader func
 -- auto width
--- width by mimetype
--- mimetype table to let the user spell javascript for exemple in the commentTable and not force him to use js
+-- split in to file
 
-local user, mailUser, mailDomain, width, countryCode, commentTable, logo
+local user, mail, mailUser, mailDomain, width, countryCode, commentTable, logo
 
-local function printError(error)
-	print ("42Header : ", error)
+M.printError = function (error)
+	vim.api.nvim_err_write_ln("42Header : ", error)
+end
+
+function mapSize (map)
+	local size = 0
+	for _ in pairs(map) do
+		size = size + 1
+	end
+	return size
+end
+
+local function getUserCommentTable()
+	if (not vim.g.commentTable) then
+		return
+	end
+	local userCommentTable = {}
+	for k, v in pairs(vim.g.commentTable) do
+		if (k and v and v["start"] and v["fill"] and v["end"] and (mapSize(v) == 3 or (mapSize(v) == 4 and v["width"]))) then
+			userCommentTable[k] = v
+		end
+	end
+	return userCommentTable
 end
 
 local function updateEnv ()
@@ -30,19 +49,19 @@ local function updateEnv ()
 	width = vim.g["42HeaderWidth"] or 80
 	if (not tonumber(width) or width < 80) then
 		width = 80
-		printError ("invalid width, using default : 80")
+		M.printError ("invalid width, using default : 80")
 	end
 
 	countryCode = vim.g.countryCode or "fr"
 	if (#countryCode ~= 2) then
 		countryCode = "fr"
-		printError ("invalid country code, using default : \"fr\"")
+		M.printError ("invalid country code, using default : \"fr\"")
 	end
 
-	local mail = vim.g["42mail"] or user .. "@studen.42." .. countryCode
+	mail = vim.g["42mail"] or user .. "@studen.42." .. countryCode
 	if (not mail:find("@", 1, true)) then
 		mail = user .. "@student.42." .. countryCode
-		printError ("invalid mail provided, using default : \"" .. user .. "@student.42." .. countryCode .. "\"")
+		M.printError ("invalid mail provided, using default : \"" .. user .. "@student.42." .. countryCode .. "\"")
 	end
 	mailUser = mail:sub(1, mail:find("@", 1, true) - 1)
 	mailDomain = mail:sub(mail:find("@", 1, true) + 1)
@@ -71,14 +90,8 @@ local function updateEnv ()
 	for k, v in pairs({"default", "sh", "bash", "py", "zsh", "ksh", "csh", "tcsh", "pdksh"}) do
 		commentTable[v] = { start = "#", fill = "#", ["end"] = "#" }
 	end
-	if (vim.g.commentTable) then
-		for k, v in pairs(vim.g.commentTable) do
-			if (k and v and v["start"] and v["fill"] and v["end"]) then
-				commentTable[k] = v
-			else
-				printError("invalid entry in commentTable not added")
-			end
-		end
+	for k, v in pairs(getUserCommentTable()) do
+		commentTable[k] = v
 	end
 end
 
@@ -118,9 +131,11 @@ local function shrink(toShrink, maxLen)
 	return toShrink
 end
 
-M.main = function ()
-	updateEnv()
+local function genNewHeader()
 	local comment = commentTable[vim.fn.expand("%:e")] or commentTable["default"]
+	if (comment["width"]) then
+		width = comment["width"]
+	end
 	local SELen = #comment["start"] + #comment["end"]
 	local maxFileNameLen = width - (#logo[2] + SELen + 3)
 	local fileName = vim.fn.expand("%:t")
@@ -147,17 +162,69 @@ M.main = function ()
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
 	}
-	if (not isThereAHeader()) then
-		vim.api.nvim_buf_set_lines(0, 0, 0, false, header)
-	else
+	if (isThereAHeader()) then
 		header[8] = header[8]:gsub(time, getCreationTime(), 1)
 		if (#getCreationUser() <= #botUser) then
 			header[8] = header[8]:gsub(botUser:gsub("%+", "%%+"), getCreationUser() .. string.rep(" ", #botUser - #getCreationUser()), 1)
 		else
 			header[8] = header[8]:gsub(botUser .. string.rep(" ", #getCreationUser() - #botUser), getCreationUser(), 1)
 		end
-		vim.api.nvim_buf_set_lines(0, 0, 11, false, header)
 	end
+	return header
+end
+
+local function writeHeader()
+	local header = genNewHeader()
+	if (isThereAHeader()) then
+		vim.api.nvim_buf_set_lines(0, 0, 11, false, header)
+	else
+		vim.api.nvim_buf_set_lines(0, 0, 0, false, header)
+	end
+end
+
+local function yank()
+	local userCommentTable = getUserCommentTable()
+	local currentSettings = ''
+	.. '-- Awesome 42Header nvim plugin user settings :\n'
+	.. 'vim.g["42user"] = "' .. user .. '"\n'
+	.. 'vim.g["42mail"] = "' .. mail .. '"\n'
+	if (countryCode ~= "fr") then
+		currentSettings = currentSettings .. 'vim.g["countryCode"] = "' .. countryCode .. '"\n'
+	end
+	if (width ~= 80) then
+		currentSettings = currentSettings .. 'vim.g["42HeaderWidth"] = "' .. width .. '"\n'
+	end
+	if (userCommentTable) then
+		currentSettings = currentSettings
+		.. 'vim.g["commentTable"] =\n'
+		.. '{\n'
+	end
+	for k, v in pairs(userCommentTable) do
+		local line = '\t["' .. k .. '"] = { ["start"] = "' .. v["start"] .. '", ["fill"] = "' .. v["fill"] .. '", ["end"] = "' .. v["end"] .. '"'
+		if (v["width"]) then
+			line = line .. ', ["width"] = ' .. v["width"]
+		end
+		currentSettings = currentSettings .. line .. ' },\n'
+	end
+	if (userCommentTable) then
+		currentSettings = currentSettings .. '}\n'
+	end
+	vim.fn.setreg('"', currentSettings)
+	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
+	print ("current settings yanked")
+end
+
+M.main = function (arg)
+	updateEnv()
+	if (not arg) then
+		writeHeader()
+		return
+	end
+	if (arg == "yank") then
+		yank()
+		return
+	end
+	M.printError("unrecognized arg : ", arg)
 end
 
 return M
