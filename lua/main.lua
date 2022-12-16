@@ -201,22 +201,21 @@ end
 
 local function getOneSetting(setting)
 	local value = vim.g[setting]
-	return value and 'vim.g["' .. setting .. '"] = "' .. value ..'"\n' or ''
+	return value and 'vim.g["' .. setting .. '"] = "' .. value ..'"' or ''
 end
 
 local function getUserSettings()
 	local currentSettings = ''
-	.. getOneSetting("42user")
-	.. getOneSetting("42mail")
-	.. getOneSetting("countryCode")
-	.. getOneSetting("42HeaderWidth")
+	local firstIt = true
+	for _, v in ipairs({ "42user", "42mail", "countryCode", "42HeaderWidth" }) do
+		currentSettings = currentSettings .. ((getOneSetting(v) ~= '' and not firstIt) and '\n' or '') .. getOneSetting(v)
+		firstIt = false
+	end
 	local userCommentTable = getUserCommentTable()
 	if (not userCommentTable) then
 		return currentSettings
 	end
-	currentSettings = currentSettings
-	.. 'vim.g["commentTable"] =\n'
-	.. '{\n'
+	currentSettings = currentSettings .. '\nvim.g["commentTable"] =\n{\n'
 	local firstLang = true
 	for k, v in pairs(userCommentTable) do
 		local line = (firstLang and '' or ',\n') .. '\t["' .. k .. '"] = {'
@@ -228,13 +227,13 @@ local function getUserSettings()
 		currentSettings = currentSettings .. line .. ' }'
 		firstLang = false
 	end
-	return currentSettings .. '\n}\n'
+	return currentSettings .. '\n}'
 end
 
 local B = {}
 
 B.yank = function ()
-	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. getUserSettings()
+	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. getUserSettings() .. '\n'
 	vim.fn.setreg('"', currentSettings)
 	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
 	print ("current settings yanked")
