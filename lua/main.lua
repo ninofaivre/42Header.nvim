@@ -12,14 +12,15 @@
 local M = {}
 
 -- TODO
+-- split in to file / sanitize
+-- mode to ensure the norm compliance (override wrong setting if needed to ensure it)
+-- auto width, let user go under 80 width ensure a minimum width depend of SELen
 -- let user set Header42Height and Header42Logo
--- auto width
--- split in to file
 
 local user, mail, mailUser, mailDomain, width, countryCode, commentTable, logo
 
-M.printError = function (error)
-	vim.api.nvim_err_write_ln("42Header : ", error)
+M.printError = function (err)
+	vim.api.nvim_err_writeln("42Header : " .. err)
 end
 
 function mapSize (map)
@@ -30,14 +31,36 @@ function mapSize (map)
 	return size
 end
 
+local validCommentTableParams =
+{
+	["required"] = { ["start"] = nil, ["fill"] = nil, ["end"] = nil },
+	["authorized"] = { ["width"] = nil }
+}
+
+local function areCommentTableParamsValid(params)
+	for k, _ in pairs(validCommentTableParams["required"]) do
+		if (not params[k]) then
+			return false
+		end
+		for k, _ in pairs(params) do
+			if (not validCommentTableParams["required"][k] and not validCommentTableParams["authorized"][k]) then
+				return false
+			end
+		end
+	end
+	return true
+end
+
 local function getUserCommentTable()
-	if (not vim.g.commentTable) then
+	if (not vim.g["commentTable"]) then
 		return
 	end
 	local userCommentTable = {}
-	for k, v in pairs(vim.g.commentTable) do
-		if (k and v and v["start"] and v["fill"] and v["end"] and (mapSize(v) == 3 or (mapSize(v) == 4 and v["width"]))) then
+	for k, v in pairs(vim.g["commentTable"]) do
+		if (k and v and areCommentTableParamsValid(v)) then
 			userCommentTable[k] = v
+		else
+			M.printError('vim.g["commentTable"][' .. k .. '] is not valid')
 		end
 	end
 	return userCommentTable
@@ -52,7 +75,7 @@ local function updateEnv ()
 		M.printError ("invalid width, using default : 80")
 	end
 
-	countryCode = vim.g.countryCode or "fr"
+	countryCode = vim.g["countryCode"] or "fr"
 	if (#countryCode ~= 2) then
 		countryCode = "fr"
 		M.printError ("invalid country code, using default : \"fr\"")
@@ -133,15 +156,9 @@ end
 
 local function genNewHeader()
 	local comment = commentTable[vim.fn.expand("%:e")] or commentTable["default"]
-	if (comment["width"]) then
-		width = comment["width"]
-	end
+	width = comment["width"] or width
 	local SELen = #comment["start"] + #comment["end"]
-	local maxFileNameLen = width - (#logo[2] + SELen + 3)
-	local fileName = vim.fn.expand("%:t")
-	if (#fileName > maxFileNameLen) then -- if fileName too long cut it
-		fileName = fileName:sub(1, maxFileNameLen - 1) .. "+"
-	end
+	local fileName = shrink(vim.fn.expand("%:t"), width - (#logo[2] + SELen + 3))
 	local time = os.date("%Y/%m/%d %H:%M:%S")
 	mailUser = shrink(mailUser, width - (#logo[4] + #mailDomain + #user + SELen + 11))
 	mailDomain = shrink(mailDomain, width - (#logo[4] + #mailUser + #user + SELen + 11))
@@ -182,36 +199,54 @@ local function writeHeader()
 	end
 end
 
-local function yank()
+local function getOneSetting(setting)
+	local value = vim.g[setting]
+	return value and 'vim.g["' .. setting .. '"] = "' .. value ..'"\n' or ''
+end
+
+local function getUserSettings()
 	local userCommentTable = getUserCommentTable()
-	local currentSettings = ''
-	.. '-- Awesome 42Header nvim plugin user settings :\n'
-	.. 'vim.g["42user"] = "' .. user .. '"\n'
-	.. 'vim.g["42mail"] = "' .. mail .. '"\n'
-	if (countryCode ~= "fr") then
-		currentSettings = currentSettings .. 'vim.g["countryCode"] = "' .. countryCode .. '"\n'
+	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n'
+	.. getOneSetting("42user")
+	.. getOneSetting("42mail")
+	.. getOneSetting("countryCode")
+	.. getOneSetting("42HeaderWidth")
+	if (not userCommentTable) then
+		return currentSettings
 	end
-	if (width ~= 80) then
-		currentSettings = currentSettings .. 'vim.g["42HeaderWidth"] = ' .. width .. '\n'
-	end
-	if (userCommentTable) then
-		currentSettings = currentSettings
-		.. 'vim.g["commentTable"] =\n'
-		.. '{\n'
-	end
+	currentSettings = currentSettings
+	.. 'vim.g["commentTable"] =\n'
+	.. '{\n'
+	local firstLang = true
 	for k, v in pairs(userCommentTable) do
-		local line = '\t["' .. k .. '"] = { ["start"] = "' .. v["start"] .. '", ["fill"] = "' .. v["fill"] .. '", ["end"] = "' .. v["end"] .. '"'
-		if (v["width"]) then
-			line = line .. ', ["width"] = ' .. v["width"]
+		local line = (firstLang and '' or ',\n') .. '\t["' .. k .. '"] = {'
+		local firstParam = true
+		for k, v in pairs(v) do
+			line = line .. (firstParam and '' or ',') .. ' ["' .. k .. '"] = ' .. (tonumber(v) and '' or '"') .. v .. (tonumber(v) and '' or '"')
+			firstParam = false
 		end
-		currentSettings = currentSettings .. line .. ' },\n'
+		currentSettings = currentSettings .. line .. ' }'
+		firstLang = false
 	end
-	if (userCommentTable) then
-		currentSettings = currentSettings .. '}\n'
-	end
+	return currentSettings .. '\n}\n'
+end
+
+local B = {}
+
+B.yank = function ()
+	local currentSettings = getUserSettings()
 	vim.fn.setreg('"', currentSettings)
 	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
 	print ("current settings yanked")
+end
+
+B.print = function ()
+	print("current user settings :")
+	print(getUserSettings())
+end
+
+B["42"] = function ()
+	print("easter egg")
 end
 
 M.main = function (arg)
@@ -220,11 +255,11 @@ M.main = function (arg)
 		writeHeader()
 		return
 	end
-	if (arg == "yank") then
-		yank()
+	if (B[arg]) then
+		B[arg]()
 		return
 	end
-	M.printError("unrecognized arg : ", arg)
+	M.printError("unrecognized arg : " .. arg)
 end
 
 return M
