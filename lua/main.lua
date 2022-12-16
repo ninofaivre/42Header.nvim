@@ -205,12 +205,12 @@ local function getOneSetting(setting)
 end
 
 local function getUserSettings()
-	local userCommentTable = getUserCommentTable()
-	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n'
+	local currentSettings = ''
 	.. getOneSetting("42user")
 	.. getOneSetting("42mail")
 	.. getOneSetting("countryCode")
 	.. getOneSetting("42HeaderWidth")
+	local userCommentTable = getUserCommentTable()
 	if (not userCommentTable) then
 		return currentSettings
 	end
@@ -234,15 +234,14 @@ end
 local B = {}
 
 B.yank = function ()
-	local currentSettings = getUserSettings()
+	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. getUserSettings()
 	vim.fn.setreg('"', currentSettings)
 	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
 	print ("current settings yanked")
 end
 
 B.print = function ()
-	print("current user settings :")
-	print(getUserSettings())
+	print("current user settings :\n\n" .. getUserSettings())
 end
 
 B["42"] = function ()
