@@ -241,7 +241,7 @@ B.yank = function ()
 end
 
 B.print = function ()
-	print("current user settings :\n\n" .. getUserSettings())
+	print("current user settings :\n", "\n" .. getUserSettings())
 end
 
 B["42"] = function ()
