@@ -3,7 +3,7 @@ local cmd = vim.api.nvim_create_user_command
 
 cmd('H42',
 function(opts)
-	if (table.getn(opts["fargs"]) > 1) then
+	if (#opts["fargs"] > 1) then
 		plugin.printError("invalid number of arguments")
 		return
 	end
