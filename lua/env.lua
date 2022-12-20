@@ -122,7 +122,7 @@ M.update = function ()
 		M.width = defaultSettings["width"]
 		invalidSetting("width")
 	else
-		M.width = tonumber(M.widht)
+		M.width = tonumber(M.width)
 	end
 end
 
