@@ -9,7 +9,7 @@
 --[[   Updated: 2022/12/20 14:32:40 by n+    ###   ########.zz        ]]--
 --[[                                                                  ]]--
 --[[ ---------------------------------------------------------------- ]]--
-local utils = vim.g["42HeaderDev"] and dofile("./lua/utils.lua") or require("utils")
+local utils = vim.g["42HeaderDev"] and dofile("./lua/utils.lua") or require("lua.utils")
 local M = {}
 
 local defaultSettings =
@@ -20,6 +20,9 @@ local defaultSettings =
 }
 
 local function isValidWidth (width, comment)
+	if (width == 'nan') then
+		return false
+	end
 	return width >= (36 + #comment["start"] + #comment["end"] + #M.logo[1])
 end
 
@@ -115,9 +118,11 @@ M.update = function ()
 		M.commentTable[k] = v
 	end
 	M.width = vim.g["42HeaderWidth"] or defaultSettings["width"]
-	if (not tonumber(M.width) or not isValidWidth(M.width, M.commentTable[vim.fn.expand("%:e")] or M.commentTable["default"])) then
+	if (not tonumber(M.width) or not isValidWidth(tonumber(M.width), M.commentTable[vim.fn.expand("%:e")] or M.commentTable["default"])) then
 		M.width = defaultSettings["width"]
 		invalidSetting("width")
+	else
+		M.width = tonumber(M.widht)
 	end
 end
 

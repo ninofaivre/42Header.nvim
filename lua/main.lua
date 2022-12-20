@@ -10,8 +10,8 @@
 --[[                                                                        ]]--
 --[[ ---------------------------------------------------------------------- ]]--
 local M = {}
-local utils = (vim.g["42HeaderDev"]) and dofile("./lua/utils.lua") or require("utils")
-local env = (vim.g["42HeaderDev"]) and dofile("./lua/env.lua") or require("env")
+local utils = (vim.g["42HeaderDev"]) and dofile("./lua/utils.lua") or require("lua.utils")
+local env = (vim.g["42HeaderDev"]) and dofile("./lua/env.lua") or require("lua.env")
 
 -- TODO
 -- option to ensure the norm compliance (override wrong setting if needed to ensure it)
@@ -48,8 +48,8 @@ local function getCreationUser ()
 	return creationLine:sub(0, creationLine:find(" ", 1, true) - 1)
 end
 
-local function genNewHeader()
-	local comment = env["commentTable"][vim.fn.expand("%:e")] or env["commentTable"]["default"]
+local function genNewHeader(forceExt)
+	local comment = env["commentTable"][forceExt or vim.fn.expand("%:e")] or env["commentTable"]["default"]
 	local width = comment["width"] or env["width"]
 	local SELen = #comment["start"] + #comment["end"]
 	local fileName = utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 3))
@@ -119,6 +119,36 @@ end
 
 B.updateOnly = function ()
 	writeHeader (true)
+end
+
+local function exec(prog)
+	local tmp = io.popen(prog .. ' >/dev/null 2>&1; echo $?')
+	if (not tmp) then
+		return
+	end
+	local res = tmp:read("*a")
+	tmp:close()
+	return res
+end
+
+B.norm = function () -- linux only -- betâ testing
+	local res = exec('python3 -m norminette -v')
+	if (not res or tonumber(res) ~= 0) then
+		print ('norm not installed')
+		return
+	end
+	env.update()
+	local header = ''
+	for _, v in pairs(genNewHeader('c')) do -- force extension
+		header = header .. v .. '\n'
+	end
+	local cmain = 'int\tmain(void)\n{\n}\n'
+	res = exec('python3 -m norminette --cfile "' .. header .. cmain .. '"')
+	if (not res or tonumber(res) ~= 0) then
+		print ('this config is not norm complient')
+	else
+		print ('this config is norm complient')
+	end
 end
 
 M.main = function (arg)
