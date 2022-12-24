@@ -1,29 +1,63 @@
---[[ ---------------------------------------------------------------- ]]--
---[[                                                                  ]]--
---[[                                             :::      ::::::::    ]]--
---[[   env.lua                                 :+:      :+:    :+:    ]]--
---[[                                         +:+ +:+         +:+      ]]--
---[[   By: nfaivre <nfaiv+@student.42.zz>  +#+  +:+       +#+         ]]--
---[[                                     +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/17 20:46:00 by n+     #+#    #+#              ]]--
---[[   Updated: 2022/12/20 14:32:40 by n+    ###   ########.zz        ]]--
---[[                                                                  ]]--
---[[ ---------------------------------------------------------------- ]]--
-local utils = vim.g["42HeaderDev"] and dofile("./lua/utils.lua") or require("lua.utils")
+--[[ ---------------------------------------------------------------------- ]]--
+--[[                                                                        ]]--
+--[[                                                   :::      ::::::::    ]]--
+--[[   env.lua                                       :+:      :+:    :+:    ]]--
+--[[                                               +:+ +:+         +:+      ]]--
+--[[   By: nfaivre <nfaivre@student.42.fr>       +#+  +:+       +#+         ]]--
+--[[                                           +#+#+#+#+#+   +#+            ]]--
+--[[   Created: 2022/12/17 20:46:00 by n+           #+#    #+#              ]]--
+--[[   Updated: 2022/12/22 02:11:24 by nfaivre     ###   ########.fr        ]]--
+--[[                                                                        ]]--
+--[[ ---------------------------------------------------------------------- ]]--
+
+--TODO handle width with different header width
+
+local utils = vim.g["42Header"]["Dev"] and dofile("./lua/utils.lua") or require("lua.utils")
 local M = {}
+local env = {}
 
 local defaultSettings =
 {
-	["width"] = 80,
+	["width"] = "auto",
+	["min-width"] = 80,
 	["user"] = "marvin",
-	["countryCode"] = "fr"
+	["countryCode"] = "fr",
+	["logoID"] = "42"
 }
 
-local function isValidWidth (width, comment)
-	if (width == 'nan') then
+-- width --
+
+local function isValidWidth (width)
+	if (width == tonumber('NaN')) then
 		return false
 	end
-	return width >= (36 + #comment["start"] + #comment["end"] + #M.logo[1])
+	return width >= (36 + #env.comment["start"] + #env.comment["end"] + #env.logo[1])
+end
+
+local function getWidth (width)
+	width = tonumber(width)
+	if (not width or not isValidWidth(width)) then
+		return defaultSettings["width"]
+	end
+	return width
+end
+
+-- width --
+
+local function getCountryCode (countryCode)
+	countryCode = tostring(countryCode)
+	if (not countryCode or #countryCode ~= 2) then
+		return defaultSettings["countryCode"]
+	end
+	return countryCode
+end
+
+local function getUser (user)
+	user = tostring(user)
+	if (not user) then
+		return defaultSettings["user"]
+	end
+	return user
 end
 
 local validCommentTableParams =
@@ -31,10 +65,6 @@ local validCommentTableParams =
 	["required"] = { ["start"] = nil, ["fill"] = nil, ["end"] = nil },
 	["authorized"] = { ["width"] = isValidWidth }
 }
-
-local function invalidSetting(setting)
-	utils.printError("invalid " .. setting .. ", using default : " .. defaultSettings[setting])
-end
 
 local function checkRequiredParams(params)
 	for k, _ in pairs(validCommentTableParams["required"]) do
@@ -73,24 +103,9 @@ M.getUserCommentTable = function ()
 	return userCommentTable
 end
 
-M.update = function ()
-	M.user = vim.g["42user"] or defaultSettings["user"]
-
-	M.countryCode = vim.g["countryCode"] or defaultSettings["countryCode"]
-	if (#M.countryCode ~= 2) then
-		M.countryCode = defaultSettings["countryCode"]
-		invalidSetting("countryCode")
-	end
-
-	M.mail = vim.g["42mail"] or M.user .. "@student.42." .. M.countryCode
-	if (not M.mail:find("@", 1, true)) then
-		M.mail = M.user .. "@student.42." .. M.countryCode
-		utils.printError("invalid mail provided, using default : \"" .. M.user .. "@student.42." .. M.countryCode .. "\"")
-	end
-	M.mailUser = M.mail:sub(1, M.mail:find("@", 1, true) - 1)
-	M.mailDomain = M.mail:sub(M.mail:find("@", 1, true) + 1)
-
-	M.logo =
+local logosTable =
+{
+	["42"] =
 	{
 		"        :::      ::::::::    ",
 		"      :+:      :+:    :+:    ",
@@ -98,10 +113,75 @@ M.update = function ()
 		"  +#+  +:+       +#+         ",
 		"+#+#+#+#+#+   +#+            ",
 		"     #+#    #+#              ",
-		"    ###   ########." .. M.countryCode .. "        "
+		"    ###   ########.CC        "
+	},
+	["1337"] =
+	{
+		"        :::   ::::::::   ::::::::  :::::::::::    ",
+		"      :+:+:  :+:    :+: :+:    :+: :+:     :+:    ",
+		"     +:+         +:+        +:+        +:+        ",
+		"     +#+      +#++:      +#++:        +#+         ",
+		"    +#+         +#+        +#+      +#+           ",
+		"   #+#  #+#    #+# #+#    #+#     #+#             ",
+		"####### ########   ########      ###.CC           ",
+	},
+	["19"] =
+	{
+		"        :::   ::::::::    ",
+		"     :+:+:  :+:    :+:    ",
+		"      +:+  +:+    +:+     ",
+		"     +#+   +#++:++#+      ",
+		"    +#+         +#+       ",
+		"   #+#  #+#    #+#        ",
+		"####### ########.CC       ",
+	},
+	["21"] =
+	{
+		'       ::::::::    :::          ',
+		'     :+:    :+: :+:+:           ',
+		'          +:+    +:+            ',
+		'       +#+      +#+   	         ',
+		'    +#+        +#+     	 ',
+		'  #+#         #+#      	 ',
+		'########## #######-school.CC    ',
 	}
+}
 
-	M.commentTable =
+local function getLogo()
+	local asciiLogo = logosTable[env.logoID]
+	for k, v in ipairs(asciiLogo) do
+		asciiLogo[k] = v:gsub("CC", env.countryCode)
+	end
+	return asciiLogo
+
+end
+
+local function getLogoID(logoID)
+	logoID = tostring(logoID)
+	if (not logoID or not logosTable[logoID]) then
+		return defaultSettings["logoID"]
+	end
+	return logoID
+end
+
+local function getMail(mail)
+	mail = tostring(mail)
+	if (not mail or not mail:find('@')) then
+		return env.user .. "@student.42." .. env.countryCode
+	end
+	return mail
+end
+
+local function getMailUser()
+	return env.mail:sub(1, env.mail:find('@', 1, true) - 1)
+end
+
+local function getMailDomain()
+	return env.mail:sub(env.mail:find('@', 1, true) + 1)
+end
+
+local function getCommentTable()
+	local commentTable =
 	{
 		lua		= { start = "--[[", fill = "-", ["end"] = "]]--" },
 		html	= { start = "<!--", fill = "-", ["end"] = "-->" },
@@ -109,21 +189,70 @@ M.update = function ()
 		hs		= { start = "{-", fill = "-", ["end"] = "-}" }
 	}
 	for _, v in pairs({"c", "h", "cpp", "hpp", "js", "ts", "go", "java", "php", "rs", "sc", "css"}) do
-		M.commentTable[v] = { start = "/*", fill = "*", ["end"] = "*/" }
+		commentTable[v] = { start = "/*", fill = "*", ["end"] = "*/" }
 	end
 	for _, v in pairs({"default", "sh", "bash", "py", "zsh", "ksh", "csh", "tcsh", "pdksh"}) do
-		M.commentTable[v] = { start = "#", fill = "#", ["end"] = "#" }
+		commentTable[v] = { start = "#", fill = "#", ["end"] = "#" }
 	end
 	for k, v in pairs(M.getUserCommentTable() or {}) do
-		M.commentTable[k] = v
+		commentTable[k] = v
 	end
-	M.width = vim.g["42HeaderWidth"] or defaultSettings["width"]
-	if (not tonumber(M.width) or not isValidWidth(tonumber(M.width), M.commentTable[vim.fn.expand("%:e")] or M.commentTable["default"])) then
-		M.width = defaultSettings["width"]
-		invalidSetting("width")
+	return commentTable
+end
+
+local function getComment()
+	return env.commentTable[vim.fn.expand("%:e") or "default"]
+end
+
+-- test --
+
+local settingGetter =
+{
+	["commentTable"] = { getter = getCommentTable },
+	["comment"] = { getter = getComment, required = { "commentTable" } },
+	["countryCode"] = { getter = getCountryCode },
+	["logoID"] = { getter = getLogoID },
+	["logo"] = { getter = getLogo, required = { "logoID", "countryCode" } },
+	["width"] = { getter = getWidth, required = { "comment", "logo" } },
+	["user"] = { getter = getUser },
+	["mail"] = { getter = getMail, required = { "user", "countryCode" } },
+	["mailUser"] = { getter = getMailUser, required = { "mail" } },
+	["mailDomain"] = { getter = getMailDomain, required = { "mail" } },
+	-- add logosTable
+}
+
+local function updateOne(setting)
+	if (env[setting]) then
+		return
+	end
+	if (settingGetter[setting]["required"]) then
+		for _, v in ipairs(settingGetter[setting]["required"]) do
+			updateOne(v)
+		end
+	end
+	if (vim.g["42Header"][setting]) then
+		env[setting] = settingGetter[setting]["getter"](vim.g["42Header"][setting])
 	else
-		M.width = tonumber(M.width)
+		env[setting] = defaultSettings[setting] or settingGetter[setting]["getter"]()
 	end
 end
+
+M.update = function ()
+	env = {}
+	for k, _ in pairs(settingGetter) do
+		updateOne(k)
+	end
+	for k, v in pairs(env) do
+		M[k] = v
+	end
+end
+
+-- test --
+
+--[[
+local function invalidSetting(setting)
+	utils.printError("invalid " .. setting .. ", using default : " .. defaultSettings[setting])
+end
+--]]
 
 return M

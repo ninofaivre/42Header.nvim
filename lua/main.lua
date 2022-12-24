@@ -3,15 +3,15 @@
 --[[                                                   :::      ::::::::    ]]--
 --[[   main.lua                                      :+:      :+:    :+:    ]]--
 --[[                                               +:+ +:+         +:+      ]]--
---[[   By: nfaivre <nfaivre@student.42.zz>       +#+  +:+       +#+         ]]--
+--[[   By: nfaivre <nfaivre@student.42.fr>       +#+  +:+       +#+         ]]--
 --[[                                           +#+#+#+#+#+   +#+            ]]--
 --[[   Created: 2022/12/20 14:50:14 by +            #+#    #+#              ]]--
---[[   Updated: 2022/12/20 15:18:48 by nfaivre     ###   ########.zz        ]]--
+--[[   Updated: 2022/12/22 02:27:44 by nfaivre     ###   ########.fr        ]]--
 --[[                                                                        ]]--
 --[[ ---------------------------------------------------------------------- ]]--
 local M = {}
-local utils = (vim.g["42HeaderDev"]) and dofile("./lua/utils.lua") or require("lua.utils")
-local env = (vim.g["42HeaderDev"]) and dofile("./lua/env.lua") or require("lua.env")
+local utils = (vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
+local env = (vim.g["42Header"]["Dev"]) and dofile("./lua/env.lua") or require("lua.env")
 
 -- TODO
 -- option to ensure the norm compliance (override wrong setting if needed to ensure it)
@@ -23,12 +23,7 @@ local function isThereAHeader ()
 	if (#oldHeader ~= 11) then
 		return false
 	end
-	for i = 1, 6 do
-		if (not oldHeader[i + 2]:find(env["logo"][i], 1, true)) then
-			return false
-		end
-	end
-	return oldHeader[9]:find(env["logo"][7]:sub(1, env["logo"][7]:find("."), 1, true)) and true or false
+	return ((oldHeader[8]:find("Created:")) and (oldHeader[9]:find("Updated:")))
 end
 
 local function getCreationTime ()
@@ -73,7 +68,6 @@ local function genNewHeader(forceExt)
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
 	}
-	--botUser = botUser:gsub("%+", "%%+")
 	if (isThereAHeader()) then
 		header[8] = header[8]:gsub(time, getCreationTime(), 1)
 		if (#getCreationUser() <= #botUser) then
