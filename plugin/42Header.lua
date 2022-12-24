@@ -1,5 +1,5 @@
-local utils = (vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
-local plugin = (vim.g["42Header"]["Dev"]) and dofile("./lua/main.lua") or require("lua.main")
+local utils = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
+local plugin = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/main.lua") or require("lua.main")
 local cmd = vim.api.nvim_create_user_command
 
 cmd('H42',

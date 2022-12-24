@@ -3,27 +3,42 @@
 --[[                                                   :::      ::::::::    ]]--
 --[[   env.lua                                       :+:      :+:    :+:    ]]--
 --[[                                               +:+ +:+         +:+      ]]--
---[[   By: nfaivre <nfaivre@student.42.fr>       +#+  +:+       +#+         ]]--
+--[[   By: marvin <marvin@student.42.ma>         +#+  +:+       +#+         ]]--
 --[[                                           +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/17 20:46:00 by n+           #+#    #+#              ]]--
---[[   Updated: 2022/12/22 02:11:24 by nfaivre     ###   ########.fr        ]]--
+--[[   Created: 2022/12/17 20:46:00 by +            #+#    #+#              ]]--
+--[[   Updated: 2022/12/24 19:07:24 by marvin      ###   ########.ma        ]]--
 --[[                                                                        ]]--
 --[[ ---------------------------------------------------------------------- ]]--
 
 --TODO handle width with different header width
 
-local utils = vim.g["42Header"]["Dev"] and dofile("./lua/utils.lua") or require("lua.utils")
+local utils = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
 local M = {}
 local env = {}
 
+local function getDefaultWidth()
+	local width = 43 + #env["logo"][1] + #env["comment"]["start"] + #env["comment"]["end"]
+	return (width < 80) and 80 or width
+end
+
 local defaultSettings =
 {
-	["width"] = "auto",
-	["min-width"] = 80,
+	["width"] = getDefaultWidth,
 	["user"] = "marvin",
 	["countryCode"] = "fr",
 	["logoID"] = "42"
 }
+
+local function getDefaultSetting(setting)
+	if (not defaultSettings[setting]) then
+		return
+	end
+	if (type(defaultSettings[setting]) == "function") then
+		return defaultSettings[setting]()
+	else
+		return defaultSettings[setting]
+	end
+end
 
 -- width --
 
@@ -37,7 +52,7 @@ end
 local function getWidth (width)
 	width = tonumber(width)
 	if (not width or not isValidWidth(width)) then
-		return defaultSettings["width"]
+		return getDefaultSetting("width")
 	end
 	return width
 end
@@ -47,7 +62,7 @@ end
 local function getCountryCode (countryCode)
 	countryCode = tostring(countryCode)
 	if (not countryCode or #countryCode ~= 2) then
-		return defaultSettings["countryCode"]
+		return getDefaultSetting("countryCode")
 	end
 	return countryCode
 end
@@ -55,7 +70,7 @@ end
 local function getUser (user)
 	user = tostring(user)
 	if (not user) then
-		return defaultSettings["user"]
+		return getDefaultSetting("user")
 	end
 	return user
 end
@@ -137,20 +152,20 @@ local logosTable =
 	},
 	["21"] =
 	{
-		'       ::::::::    :::          ',
-		'     :+:    :+: :+:+:           ',
-		'          +:+    +:+            ',
-		'       +#+      +#+   	         ',
-		'    +#+        +#+     	 ',
-		'  #+#         #+#      	 ',
-		'########## #######-school.CC    ',
+		"       ::::::::    :::          ",
+		"     :+:    :+: :+:+:           ",
+		"          +:+    +:+            ",
+		"       +#+      +#+             ",
+		"    +#+        +#+              ",
+		"  #+#         #+#               ",
+		"########## #######-school.CC    ",
 	}
 }
 
 local function getLogo()
-	local asciiLogo = logosTable[env.logoID]
+	local asciiLogo = utils.deepcopy(logosTable[env["logoID"]])
 	for k, v in ipairs(asciiLogo) do
-		asciiLogo[k] = v:gsub("CC", env.countryCode)
+		asciiLogo[k] = v:gsub("CC", env["countryCode"])
 	end
 	return asciiLogo
 
@@ -159,7 +174,7 @@ end
 local function getLogoID(logoID)
 	logoID = tostring(logoID)
 	if (not logoID or not logosTable[logoID]) then
-		return defaultSettings["logoID"]
+		return getDefaultSetting("logoID")
 	end
 	return logoID
 end
@@ -183,10 +198,10 @@ end
 local function getCommentTable()
 	local commentTable =
 	{
-		lua		= { start = "--[[", fill = "-", ["end"] = "]]--" },
+		lua	= { start = "--[[", fill = "-", ["end"] = "]]--" },
 		html	= { start = "<!--", fill = "-", ["end"] = "-->" },
-		rb		= { start = "=begin", fill = "#", ["end"] = "=end" },
-		hs		= { start = "{-", fill = "-", ["end"] = "-}" }
+		rb	= { start = "=begin", fill = "#", ["end"] = "=end" },
+		hs	= { start = "{-", fill = "-", ["end"] = "-}" }
 	}
 	for _, v in pairs({"c", "h", "cpp", "hpp", "js", "ts", "go", "java", "php", "rs", "sc", "css"}) do
 		commentTable[v] = { start = "/*", fill = "*", ["end"] = "*/" }
@@ -230,10 +245,10 @@ local function updateOne(setting)
 			updateOne(v)
 		end
 	end
-	if (vim.g["42Header"][setting]) then
+	if (vim.g["42Header"] and vim.g["42Header"][setting]) then
 		env[setting] = settingGetter[setting]["getter"](vim.g["42Header"][setting])
 	else
-		env[setting] = defaultSettings[setting] or settingGetter[setting]["getter"]()
+		env[setting] = getDefaultSetting(setting) or settingGetter[setting]["getter"]()
 	end
 end
 
@@ -251,7 +266,7 @@ end
 
 --[[
 local function invalidSetting(setting)
-	utils.printError("invalid " .. setting .. ", using default : " .. defaultSettings[setting])
+	utils.printError("invalid " .. setting .. ", using default : " .. getDefaultSetting(setting))
 end
 --]]
 

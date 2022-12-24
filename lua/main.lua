@@ -10,8 +10,8 @@
 --[[                                                                        ]]--
 --[[ ---------------------------------------------------------------------- ]]--
 local M = {}
-local utils = (vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
-local env = (vim.g["42Header"]["Dev"]) and dofile("./lua/env.lua") or require("lua.env")
+local utils = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
+local env = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/env.lua") or require("lua.env")
 
 -- TODO
 -- option to ensure the norm compliance (override wrong setting if needed to ensure it)
