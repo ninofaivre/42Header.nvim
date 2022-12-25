@@ -1,3 +1,14 @@
+--[[ ---------------------------------------------------------------------- ]]--
+--[[                                                                        ]]--
+--[[                                                   :::      ::::::::    ]]--
+--[[   utils.lua                                     :+:      :+:    :+:    ]]--
+--[[                                               +:+ +:+         +:+      ]]--
+--[[   By: nfaivre <nfaivre@student.42.ma>       +#+  +:+       +#+         ]]--
+--[[                                           +#+#+#+#+#+   +#+            ]]--
+--[[   Created: 2022/12/24 19:34:19 by marvin       #+#    #+#              ]]--
+--[[   Updated: 2022/12/24 23:30:40 by nfaivre     ###   ########.ma        ]]--
+--[[                                                                        ]]--
+--[[ ---------------------------------------------------------------------- ]]--
 local M = {}
 
 M.deepcopy = function(orig)
@@ -9,7 +20,7 @@ M.deepcopy = function(orig)
 			copy[M.deepcopy(orig_key)] = M.deepcopy(orig_value)
 		end
 		setmetatable(copy, M.deepcopy(getmetatable(orig)))
-	else -- number, string, boolean, etc
+	else
 		copy = orig
 	end
 	return copy
@@ -38,25 +49,29 @@ local function getOneUserSettingStr(setting)
 		return ''
 	end
 	local value = vim.g["42Header"][setting]
-	local quote = type(value) == "number" and '' or '"'
-	return 'vim.g["' .. setting .. '"] = '.. quote .. value .. quote
+	local quote = type(value) == "string" and '"' or ''
+	return '\n\t["' .. setting .. '"] = '.. quote .. tostring(value) .. quote
 end
 
 M.getUserSettingsStr = function (userCommentTable)
 	local currentSettings = 'vim.g["42Header"] =\n{'
-	for _, v in ipairs({ "user", "mail", "countryCode", "width" }) do
-		currentSettings = currentSettings ..'\n\t' .. getOneUserSettingStr(v)
+	local firstIt = true
+	for _, v in ipairs({ "Dev", "user", "mail", "countryCode", "width", "logoID" }) do
+		currentSettings = currentSettings .. ((getOneUserSettingStr(v) ~= '' and firstIt == false) and ',' or '') .. getOneUserSettingStr(v)
+		if (getOneUserSettingStr(v) ~= '') then
+			firstIt = false
+		end
 	end
 	if (not userCommentTable) then
 		return currentSettings .. '\n}'
 	end
-	currentSettings = currentSettings .. '\nvim.g["commentTable"] =\n{\n'
+	currentSettings = currentSettings .. (firstIt and '' or ',') .. '\n\t["commentTable"] =\n\t{\n'
 	local firstLang = true
 	for k, v in pairs(userCommentTable) do
 		local line = (firstLang and '' or ',\n') .. '\t\t["' .. k .. '"] = {'
 		local firstParam = true
 		for k, v in pairs(v) do
-			local quote = type(v) == "number" and '' or '"'
+			local quote = type(v) == "string" and '"' or ''
 			line = line .. (firstParam and '' or ',') .. ' ["' .. k .. '"] = ' .. quote .. v .. quote
 			firstParam = false
 		end

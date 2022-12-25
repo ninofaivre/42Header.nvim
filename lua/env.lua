@@ -3,10 +3,10 @@
 --[[                                                   :::      ::::::::    ]]--
 --[[   env.lua                                       :+:      :+:    :+:    ]]--
 --[[                                               +:+ +:+         +:+      ]]--
---[[   By: marvin <marvin@student.42.ma>         +#+  +:+       +#+         ]]--
+--[[   By: marvin <marvin@student.42.ru>         +#+  +:+       +#+         ]]--
 --[[                                           +#+#+#+#+#+   +#+            ]]--
 --[[   Created: 2022/12/17 20:46:00 by +            #+#    #+#              ]]--
---[[   Updated: 2022/12/24 19:07:24 by marvin      ###   ########.ma        ]]--
+--[[   Updated: 2022/12/24 19:24:05 by marvin      ###   ########.ru        ]]--
 --[[                                                                        ]]--
 --[[ ---------------------------------------------------------------------- ]]--
 
@@ -91,28 +91,32 @@ local function checkRequiredParams(params)
 end
 
 local function isValidParam(param, value, values)
+	return true
+	--[[
 	if ((not validCommentTableParams["required"][param] and not validCommentTableParams["authorized"][param]) or not validCommentTableParams[param](value, values)) then
 		return false
 	end
 	return true
+	]]--
 end
 
 M.getUserCommentTable = function ()
-	if (not vim.g["commentTable"]) then
+	if (not vim.g["42Header"] or not vim.g["42Header"]["commentTable"]) then
 		return
 	end
 	local userCommentTable = {}
-	for K, V in pairs(vim.g["commentTable"]) do
+	for K, V in pairs(vim.g["42Header"]["commentTable"]) do
 		if (K and V and checkRequiredParams(V)) then
+			userCommentTable[K] = {}
 			for k, v in pairs(V) do
-				if isValidParam(k, v, V) then
+				if (isValidParam(k, v, V)) then
 					userCommentTable[K][k] = v
 				else
-					utils.printError('vim.g["commentTable"][' .. K .. '][' .. k .. '] is not valid')
+					utils.printError('vim.g["42Header"]["commentTable"][' .. K .. '][' .. k .. '] is not valid')
 				end
 			end
 		else
-			utils.printError('vim.g["commentTable"][' .. K .. '] is not valid')
+			utils.printError('vim.g["42Header"]["commentTable"][' .. K .. '] is not valid')
 		end
 	end
 	return userCommentTable
@@ -133,8 +137,8 @@ local logosTable =
 	["1337"] =
 	{
 		"        :::   ::::::::   ::::::::  :::::::::::    ",
-		"      :+:+:  :+:    :+: :+:    :+: :+:     :+:    ",
-		"     +:+         +:+        +:+        +:+        ",
+		"     :+:+:   :+:    :+: :+:    :+: :+:     :+:    ",
+		"      +:+        +:+        +:+        +:+        ",
 		"     +#+      +#++:      +#++:        +#+         ",
 		"    +#+         +#+        +#+      +#+           ",
 		"   #+#  #+#    #+# #+#    #+#     #+#             ",
