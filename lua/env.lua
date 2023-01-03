@@ -1,125 +1,41 @@
---[[ ---------------------------------------------------------------------- ]]--
---[[                                                                        ]]--
---[[                                                   :::      ::::::::    ]]--
---[[   env.lua                                       :+:      :+:    :+:    ]]--
---[[                                               +:+ +:+         +:+      ]]--
---[[   By: marvin <marvin@student.42.ru>         +#+  +:+       +#+         ]]--
---[[                                           +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/17 20:46:00 by +            #+#    #+#              ]]--
---[[   Updated: 2022/12/24 19:24:05 by marvin      ###   ########.ru        ]]--
---[[                                                                        ]]--
---[[ ---------------------------------------------------------------------- ]]--
+local lazy = setmetatable({}, {
+	__index = function(_, key)
+		return require('' .. key)
+	end
+})
 
---TODO handle width with different header width
-
-local utils = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
-local M = {}
-local env = {}
-
-local function getDefaultWidth()
-	local width = 43 + #env["logo"][1] + #env["comment"]["start"] + #env["comment"]["end"]
-	return (width < 80) and 80 or width
+local function getFileExt(_, _)
+	return vim.fn.expand("%:e")
 end
 
-local defaultSettings =
-{
-	["width"] = getDefaultWidth,
-	["user"] = "marvin",
-	["countryCode"] = "fr",
-	["logoID"] = "42"
-}
-
-local function getDefaultSetting(setting)
-	if (not defaultSettings[setting]) then
-		return
-	end
-	if (type(defaultSettings[setting]) == "function") then
-		return defaultSettings[setting]()
-	else
-		return defaultSettings[setting]
-	end
-end
-
--- width --
-
-local function isValidWidth (width)
-	if (width == tonumber('NaN')) then
-		return false
-	end
-	return width >= (36 + #env.comment["start"] + #env.comment["end"] + #env.logo[1])
-end
-
-local function getWidth (width)
-	width = tonumber(width)
-	if (not width or not isValidWidth(width)) then
-		return getDefaultSetting("width")
-	end
-	return width
-end
-
--- width --
-
-local function getCountryCode (countryCode)
-	countryCode = tostring(countryCode)
-	if (not countryCode or #countryCode ~= 2) then
-		return getDefaultSetting("countryCode")
-	end
-	return countryCode
-end
-
-local function getUser (user)
-	user = tostring(user)
-	if (not user) then
-		return getDefaultSetting("user")
-	end
-	return user
-end
-
-local validCommentTableParams =
-{
-	["required"] = { ["start"] = nil, ["fill"] = nil, ["end"] = nil },
-	["authorized"] = { ["width"] = isValidWidth }
-}
-
-local function checkRequiredParams(params)
-	for k, _ in pairs(validCommentTableParams["required"]) do
-		if (not params[k]) then
-			return false
+local function getComment(_, env)
+	local userCommentTable = lazy.userSettings.get("commentTable") or {}
+	local comment = userCommentTable[env["fileExt"]] or userCommentTable["default"] or lazy.defaultSettings.get("comment", env)
+	for k, v in pairs(lazy.defaultSettings.get("comment", env)) do
+		if (not comment[k] or type(comment[k]) ~= type(v)) then
+			comment[k] = v
 		end
 	end
-	return true
+	return comment
 end
 
-local function isValidParam(param, value, values)
-	return true
-	--[[
-	if ((not validCommentTableParams["required"][param] and not validCommentTableParams["authorized"][param]) or not validCommentTableParams[param](value, values)) then
-		return false
-	end
-	return true
-	]]--
-end
-
-M.getUserCommentTable = function ()
-	if (not vim.g["42Header"] or not vim.g["42Header"]["commentTable"]) then
-		return
-	end
-	local userCommentTable = {}
-	for K, V in pairs(vim.g["42Header"]["commentTable"]) do
-		if (K and V and checkRequiredParams(V)) then
-			userCommentTable[K] = {}
-			for k, v in pairs(V) do
-				if (isValidParam(k, v, V)) then
-					userCommentTable[K][k] = v
-				else
-					utils.printError('vim.g["42Header"]["commentTable"][' .. K .. '][' .. k .. '] is not valid')
-				end
-			end
-		else
-			utils.printError('vim.g["42Header"]["commentTable"][' .. K .. '] is not valid')
+local function getByChecker(V, env)
+	local args = lazy.utils.arrayTrimNil(
+	{
+		env["comment"]["env"] and env["comment"]["env"][V["var"]],
+		lazy.userSettings.get(V["var"]),
+		unpack(V["fb"] or  {})
+	})
+	for _, v in ipairs(args) do
+		if (V["checker"](v, env)) then
+			return v
 		end
 	end
-	return userCommentTable
+	return lazy.defaultSettings.get(V["var"], env)
+end
+
+local function isValidCountryCode(countryCode)
+	return type(countryCode) == "string" and #countryCode == 2
 end
 
 local logosTable =
@@ -166,8 +82,8 @@ local logosTable =
 	}
 }
 
-local function getLogo()
-	local asciiLogo = utils.deepcopy(logosTable[env["logoID"]])
+local function getLogo(_, env)
+	local asciiLogo = lazy.utils.deepcopy(logosTable[env["logoID"]])
 	for k, v in ipairs(asciiLogo) do
 		asciiLogo[k] = v:gsub("CC", env["countryCode"])
 	end
@@ -175,103 +91,67 @@ local function getLogo()
 
 end
 
-local function getLogoID(logoID)
-	logoID = tostring(logoID)
-	if (not logoID or not logosTable[logoID]) then
-		return getDefaultSetting("logoID")
+local function isValidLogoID(logoID)
+	return logosTable[logoID] ~= nil
+end
+
+-- width --
+
+local function isValidWidth (width, env)
+	if (type(width) ~= "number" or width == tonumber('NaN')) then
+		return false
 	end
-	return logoID
+	return width >= (36 + #env.comment["start"] + #env.comment["end"] + #env.logo[1])
 end
 
-local function getMail(mail)
-	mail = tostring(mail)
-	if (not mail or not mail:find('@')) then
-		return env.user .. "@student.42." .. env.countryCode
-	end
-	return mail
+-- width --
+
+local function isValidMail(mail)
+	return type(mail) == "string" and mail:find('@') and true or false
 end
 
-local function getMailUser()
-	return env.mail:sub(1, env.mail:find('@', 1, true) - 1)
+local function getMailUser(_, env)
+	return env["mail"]:sub(1, env["mail"]:find('@', 1, true) - 1)
 end
 
-local function getMailDomain()
-	return env.mail:sub(env.mail:find('@', 1, true) + 1)
+local function getMailDomain(_, env)
+	return env["mail"]:sub(env["mail"]:find('@', 1, true) + 1)
 end
 
-local function getCommentTable()
-	local commentTable =
+local function getEnv()
+	local getters =
 	{
-		lua	= { start = "--[[", fill = "-", ["end"] = "]]--" },
-		html	= { start = "<!--", fill = "-", ["end"] = "-->" },
-		rb	= { start = "=begin", fill = "#", ["end"] = "=end" },
-		hs	= { start = "{-", fill = "-", ["end"] = "-}" }
+		{ var = "fileExt", getter = getFileExt },
+		{ var = "comment", getter = getComment },
+		{ var = "countryCode", checker = isValidCountryCode },
+		{ var = "logoID", checker = isValidLogoID },
+		{ var = "logo", getter = getLogo },
+		{ var = "width", checker = isValidWidth },
+		{
+			var = "user",
+			checker = function (user) return type(user == "string") end,
+			fb = { vim.g["user42"], vim.g["42user"], vim.env["42USER"], vim.env["USER42"], vim.env["USER"] }
+		},
+		{
+			var = "mail", checker = isValidMail,
+			fb = { vim.g["mail42"], vim.g["42mail"], vim.env["42MAIL"], vim.env["MAIL42"], vim.env["MAIL"] }
+		},
+		{ var = "mailUser", getter = getMailUser },
+		{ var = "mailDomain", getter = getMailDomain },
+		-- add logosTable
 	}
-	for _, v in pairs({"c", "h", "cpp", "hpp", "js", "ts", "go", "java", "php", "rs", "sc", "css"}) do
-		commentTable[v] = { start = "/*", fill = "*", ["end"] = "*/" }
-	end
-	for _, v in pairs({"default", "sh", "bash", "py", "zsh", "ksh", "csh", "tcsh", "pdksh"}) do
-		commentTable[v] = { start = "#", fill = "#", ["end"] = "#" }
-	end
-	for k, v in pairs(M.getUserCommentTable() or {}) do
-		commentTable[k] = v
-	end
-	return commentTable
-end
-
-local function getComment()
-	return env.commentTable[vim.fn.expand("%:e") or "default"]
-end
-
--- test --
-
-local settingGetter =
-{
-	["commentTable"] = { getter = getCommentTable },
-	["comment"] = { getter = getComment, required = { "commentTable" } },
-	["countryCode"] = { getter = getCountryCode },
-	["logoID"] = { getter = getLogoID },
-	["logo"] = { getter = getLogo, required = { "logoID", "countryCode" } },
-	["width"] = { getter = getWidth, required = { "comment", "logo" } },
-	["user"] = { getter = getUser },
-	["mail"] = { getter = getMail, required = { "user", "countryCode" } },
-	["mailUser"] = { getter = getMailUser, required = { "mail" } },
-	["mailDomain"] = { getter = getMailDomain, required = { "mail" } },
-	-- add logosTable
-}
-
-local function updateOne(setting)
-	if (env[setting]) then
-		return
-	end
-	if (settingGetter[setting]["required"]) then
-		for _, v in ipairs(settingGetter[setting]["required"]) do
-			updateOne(v)
+	local env = {}
+	for _, v in pairs(getters) do
+		if (v["getter"]) then
+			env[v["var"]] = v["getter"](lazy.userSettings.get(v["var"]), env)
+		elseif (v["checker"]) then
+			env[v["var"]] = getByChecker(v, env)
 		end
 	end
-	if (vim.g["42Header"] and vim.g["42Header"][setting]) then
-		env[setting] = settingGetter[setting]["getter"](vim.g["42Header"][setting])
-	else
-		env[setting] = getDefaultSetting(setting) or settingGetter[setting]["getter"]()
-	end
+	return env
 end
 
-M.update = function ()
-	env = {}
-	for k, _ in pairs(settingGetter) do
-		updateOne(k)
-	end
-	for k, v in pairs(env) do
-		M[k] = v
-	end
-end
-
--- test --
-
---[[
-local function invalidSetting(setting)
-	utils.printError("invalid " .. setting .. ", using default : " .. getDefaultSetting(setting))
-end
---]]
-
-return M
+return
+{
+	get = getEnv
+}

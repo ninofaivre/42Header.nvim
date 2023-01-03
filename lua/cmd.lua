@@ -1,21 +1,8 @@
---[[ ---------------------------------------------------------------------- ]]--
---[[                                                                        ]]--
---[[                                                   :::      ::::::::    ]]--
---[[   main.lua                                      :+:      :+:    :+:    ]]--
---[[                                               +:+ +:+         +:+      ]]--
---[[   By: nfaivre <nfaivre@student.42.fr>       +#+  +:+       +#+         ]]--
---[[                                           +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/20 14:50:14 by +            #+#    #+#              ]]--
---[[   Updated: 2022/12/22 02:27:44 by nfaivre     ###   ########.fr        ]]--
---[[                                                                        ]]--
---[[ ---------------------------------------------------------------------- ]]--
-local M = {}
-local utils = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/utils.lua") or require("lua.utils")
-local env = (vim.g["42Header"] and vim.g["42Header"]["Dev"]) and dofile("./lua/env.lua") or require("lua.env")
-
--- TODO
--- option to ensure the norm compliance (override wrong setting if needed to ensure it)
--- auto width option
+local lazy = setmetatable({}, {
+	__index = function(_, key)
+		return require('' .. key)
+	end
+})
 
 local function isThereAHeader ()
 	local oldHeader = vim.api.nvim_buf_get_lines(0, 0, 11, false)
@@ -43,16 +30,17 @@ local function getCreationUser ()
 	return creationLine:sub(0, creationLine:find(" ", 1, true) - 1)
 end
 
-local function genNewHeader(forceExt)
-	local comment = env["commentTable"][forceExt or vim.fn.expand("%:e")] or env["commentTable"]["default"]
-	local width = comment["width"] or env["width"]
+local function genNewHeader()
+	local env = require("env").get()
+	local comment = env["comment"]
+	local width = env["width"]
 	local SELen = #comment["start"] + #comment["end"]
-	local fileName = utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 3))
+	local fileName = lazy.utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 3))
 	local time = os.date("%Y/%m/%d %H:%M:%S") .. ''
-	local mailUser = utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 11))
-	local mailDomain = utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 11))
-	local topUser = utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 11))
-	local botUser = utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 16))
+	local mailUser = lazy.utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 11))
+	local mailDomain = lazy.utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 11))
+	local topUser = lazy.utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 11))
+	local botUser = lazy.utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 16))
 	local header =
 	{
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
@@ -82,7 +70,6 @@ local function genNewHeader(forceExt)
 end
 
 local function writeHeader(updateOnly)
-	env.update()
 	if (not isThereAHeader() and updateOnly) then
 		return
 	end
@@ -94,67 +81,30 @@ local function writeHeader(updateOnly)
 	end
 end
 
-local B = {}
+local function print()
+	print("current user settings :\n", "\n" .. lazy.utils.getUserSettingsStr())
+end
 
-B.yank = function ()
-	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. utils.getUserSettingsStr(env.getUserCommentTable()) .. '\n'
+local function yank()
+	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. lazy.utils.getUserSettingsStr() .. '\n'
 	vim.fn.setreg('"', currentSettings)
 	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
 	print ("current settings yanked")
 end
 
-B.print = function ()
-	print("current user settings :\n", "\n" .. utils.getUserSettingsStr(env.getUserCommentTable()))
-end
-
-B["42"] = function ()
+local function easterEgg()
 	print("easter egg")
 end
 
-B.updateOnly = function ()
+local function updateOnly()
 	writeHeader (true)
 end
 
-local function exec(prog)
-	local tmp = io.popen(prog .. ' >/dev/null 2>&1; echo $?')
-	if (not tmp) then
-		return
-	end
-	local res = tmp:read("*a")
-	tmp:close()
-	return res
-end
-
-B.norm = function () -- linux only -- betâ testing
-	local res = exec('python3 -m norminette -v')
-	if (not res or tonumber(res) ~= 0) then
-		print ('norm not installed')
-		return
-	end
-	env.update()
-	local header = ''
-	for _, v in pairs(genNewHeader('c')) do -- force extension
-		header = header .. v .. '\n'
-	end
-	local cmain = 'int\tmain(void)\n{\n}\n'
-	res = exec('python3 -m norminette --cfile "' .. header .. cmain .. '"')
-	if (not res or tonumber(res) ~= 0) then
-		print ('this config is not norm complient')
-	else
-		print ('this config is norm complient')
-	end
-end
-
-M.main = function (arg)
-	if (not arg) then
-		writeHeader(false)
-		return
-	end
-	if (B[arg]) then
-		B[arg]()
-		return
-	end
-	utils.printError("unrecognized arg : " .. arg)
-end
-
-return M
+return
+{
+	print = print,
+	yank = yank,
+	["42"] = easterEgg,
+	writeHeader = writeHeader,
+	updateOnly = updateOnly
+}

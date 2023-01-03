@@ -1,38 +1,33 @@
---[[ ---------------------------------------------------------------------- ]]--
---[[                                                                        ]]--
---[[                                                   :::      ::::::::    ]]--
---[[   utils.lua                                     :+:      :+:    :+:    ]]--
---[[                                               +:+ +:+         +:+      ]]--
---[[   By: nfaivre <nfaivre@student.42.ma>       +#+  +:+       +#+         ]]--
---[[                                           +#+#+#+#+#+   +#+            ]]--
---[[   Created: 2022/12/24 19:34:19 by marvin       #+#    #+#              ]]--
---[[   Updated: 2022/12/24 23:30:40 by nfaivre     ###   ########.ma        ]]--
---[[                                                                        ]]--
---[[ ---------------------------------------------------------------------- ]]--
 local M = {}
 
-M.deepcopy = function(orig)
+M.getUserSettingsStr = function ()
+	local toReturn = 'require("42Header").setup(\n{\n'
+	for _, v in ipairs({"user", "mail", "countryCode", "width", "logoID"}) do
+		if (require("userSettings").get()[v]) then
+			toReturn = toReturn .. '\t' .. v .. ' = ' .. tostring(require("userSettings").get()[v]) .. ',\n'
+		end
+	end
+	-- add print of commentTable
+	toReturn = toReturn .. '}'
+	return toReturn
+end
+
+local function deepcopy (orig)
 	local orig_type = type(orig)
 	local copy
 	if orig_type == 'table' then
 		copy = {}
 		for orig_key, orig_value in next, orig, nil do
-			copy[M.deepcopy(orig_key)] = M.deepcopy(orig_value)
+			copy[deepcopy(orig_key)] = deepcopy(orig_value)
 		end
-		setmetatable(copy, M.deepcopy(getmetatable(orig)))
+		setmetatable(copy, deepcopy(getmetatable(orig)))
 	else
 		copy = orig
 	end
 	return copy
 end
 
-M.mapSize = function (map)
-	local size = 0
-	for _ in pairs(map) do
-		size = size + 1
-	end
-	return size
-end
+M.deepcopy = deepcopy
 
 M.shrink = function (toShrink, maxLen)
 	maxLen = (maxLen <= 0) and 1 or maxLen
@@ -40,45 +35,14 @@ M.shrink = function (toShrink, maxLen)
 	return toShrink
 end
 
-M.printError = function (err)
-	vim.api.nvim_err_writeln("42Header : " .. err)
-end
-
-local function getOneUserSettingStr(setting)
-	if (not vim.g["42Header"] or not vim.g["42Header"][setting]) then
-		return ''
-	end
-	local value = vim.g["42Header"][setting]
-	local quote = type(value) == "string" and '"' or ''
-	return '\n\t["' .. setting .. '"] = '.. quote .. tostring(value) .. quote
-end
-
-M.getUserSettingsStr = function (userCommentTable)
-	local currentSettings = 'vim.g["42Header"] =\n{'
-	local firstIt = true
-	for _, v in ipairs({ "Dev", "user", "mail", "countryCode", "width", "logoID" }) do
-		currentSettings = currentSettings .. ((getOneUserSettingStr(v) ~= '' and firstIt == false) and ',' or '') .. getOneUserSettingStr(v)
-		if (getOneUserSettingStr(v) ~= '') then
-			firstIt = false
+M.arrayTrimNil = function (array)
+	local toReturn = {}
+	for i = 1, table.maxn(array) do
+		if (array[i]) then
+			table.insert(toReturn, array[i])
 		end
 	end
-	if (not userCommentTable) then
-		return currentSettings .. '\n}'
-	end
-	currentSettings = currentSettings .. (firstIt and '' or ',') .. '\n\t["commentTable"] =\n\t{\n'
-	local firstLang = true
-	for k, v in pairs(userCommentTable) do
-		local line = (firstLang and '' or ',\n') .. '\t\t["' .. k .. '"] = {'
-		local firstParam = true
-		for k, v in pairs(v) do
-			local quote = type(v) == "string" and '"' or ''
-			line = line .. (firstParam and '' or ',') .. ' ["' .. k .. '"] = ' .. quote .. v .. quote
-			firstParam = false
-		end
-		currentSettings = currentSettings .. line .. ' }'
-		firstLang = false
-	end
-	return currentSettings .. '\n\t}\n}'
+	return toReturn
 end
 
 return M
