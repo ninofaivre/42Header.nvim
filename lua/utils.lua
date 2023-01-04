@@ -45,4 +45,8 @@ M.arrayTrimNil = function (array)
 	return toReturn
 end
 
+M.plainText = function (str)
+	return str:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+end
+
 return M

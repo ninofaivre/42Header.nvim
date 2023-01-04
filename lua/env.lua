@@ -31,8 +31,9 @@ local function getByChecker(V, env)
 		unpack(V["fb"] or  {})
 	})
 	for _, v in ipairs(args) do
-		if (V["checker"](v, env)) then
-			return v
+		local good, value = V["checker"](v, env)
+		if (good) then
+			return value or v
 		end
 	end
 	return lazy.defaultSettings.get(V["var"], env)
@@ -123,6 +124,13 @@ local function isValidLogoID(logoID, env)
 	end
 end
 
+local function isValidUser(user, env)
+	if (type(user) ~= "string") then
+		return false, nil
+	end
+	return true, user:gsub(lazy.utils.plainText(env["background"]), (env["background"] == " " and "." or " "))
+end
+
 -- width --
 
 local function isValidWidth (width, env)
@@ -155,9 +163,10 @@ local function getEnv()
 		{ var = "logoID", checker = isValidLogoID },
 		{ var = "logo", getter = getLogo },
 		{ var = "width", checker = isValidWidth },
+		{ var = "background", checker = function (background) return type(background) == "string" and #background == 1 end },
 		{
 			var = "user",
-			checker = function (user) return type(user == "string") end,
+			checker = isValidUser,
 			fb = { vim.g["user42"], vim.g["42user"], vim.env["42USER"], vim.env["USER42"], vim.env["USER"] }
 		},
 		{

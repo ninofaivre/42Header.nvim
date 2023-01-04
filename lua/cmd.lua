@@ -26,45 +26,47 @@ local function getCreationUser ()
 		return ''
 	end
 	local creationLine = vim.api.nvim_buf_get_lines(0, 7, 8, false)[1]
-	creationLine = creationLine:sub(({creationLine:find("by ", 1, true)})[2] + 1)
-	return creationLine:sub(0, creationLine:find(" ", 1, true) - 1)
+	local background = creationLine:sub(creationLine:find("by", 1, true) - 1, creationLine:find("by", 1, true) - 1)
+	creationLine = creationLine:sub(({creationLine:find("by", 1, true)})[2] + 2)
+	return creationLine:sub(0, creationLine:find(background, 1, true) - 1)
 end
 
 local function genNewHeader()
 	local env = require("env").get()
+	local bg = env["background"]
 	local comment = env["comment"]
 	local width = env["width"]
 	local SELen = #comment["start"] + #comment["end"]
 	local fileName = lazy.utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 7))
-	local time = os.date("%Y/%m/%d %H:%M:%S") .. ''
-	local mailUser = lazy.utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 15))
-	local mailDomain = lazy.utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 15))
-	local topUser = lazy.utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 15))
-	local botUser = lazy.utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 20))
-	local topBotBorder = string.rep(comment["fill"] ~= "" and comment["fill"] or " ", width - (SELen + 2)):sub(1, width - (SELen + 2))
+	local time = os.date("%Y/%m/%d %H:%M:%S"):gsub(" ", bg)
+	local mailUser = lazy.utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 16))
+	local mailDomain = lazy.utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 16))
+	local topUser = lazy.utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 16))
+	local botUser = lazy.utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 21))
+	local topBotBorder = string.rep(comment["fill"] ~= "" and comment["fill"] or env["background"], width - (SELen + 2)):sub(1, width - (SELen + 2))
 	local header =
 	{
-		comment["start"] .. " " .. topBotBorder .. " " .. comment["end"],
-		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][1] + SELen + 4)) .. env["logo"][1] .. "    " .. comment["end"],
-		comment["start"] .. "   " .. fileName .. string.rep(" ", width - (#env["logo"][2] + #fileName + SELen + 7)) .. env["logo"][2] .. "    " .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][3] + SELen + 4)) .. env["logo"][3] .. "    " .. comment["end"],
-		comment["start"] .. "   By: " .. topUser .. " <" .. mailUser .. "@" .. mailDomain .. ">"
-			.. string.rep(" ", (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 15))) .. env["logo"][4] .. "    " .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][5] + SELen + 4)) .. env["logo"][5] .. "    " .. comment["end"],
-		comment["start"] .. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][6] + #time + #botUser + SELen + 20)) .. env["logo"][6] .. "    " .. comment["end"],
-		comment["start"] .. "   Updated: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][7] + #time + #botUser + SELen + 20)) .. env["logo"][7] .. "    " .. comment["end"],
-		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
-		comment["start"] .. " " .. topBotBorder .. " " .. comment["end"],
+		comment["start"] .. bg .. topBotBorder .. bg .. comment["end"],
+		comment["start"] .. string.rep(bg, width - SELen) .. comment["end"],
+		comment["start"] .. string.rep(bg, width - (#env["logo"][1] + SELen + 4)) .. env["logo"][1] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, 3) .. fileName .. string.rep(bg, width - (#env["logo"][2] + #fileName + SELen + 7)) .. env["logo"][2] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, width - (#env["logo"][3] + SELen + 4)) .. env["logo"][3] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, 3) .. "By:" .. bg .. topUser .. bg .. "<" .. mailUser .. "@" .. mailDomain .. ">"
+			.. string.rep(bg, (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 15))) .. env["logo"][4] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, width - (#env["logo"][5] + SELen + 4)) .. env["logo"][5] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, 3) .. "Created:" .. bg .. time .. bg .. "by" .. bg .. botUser .. string.rep(bg, width - (#env["logo"][6] + #time + #botUser + SELen + 20)) .. env["logo"][6] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, 3) .. "Updated:" .. bg .. time .. bg .. "by" .. bg .. botUser .. string.rep(bg, width - (#env["logo"][7] + #time + #botUser + SELen + 20)) .. env["logo"][7] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, width - SELen) .. comment["end"],
+		comment["start"] .. bg .. topBotBorder .. bg .. comment["end"],
 	}
 	if (isThereAHeader()) then
 		header[8] = header[8]:gsub(time, getCreationTime(), 1)
 		if (#getCreationUser() <= #botUser) then
-			header[8] = header[8]:gsub(botUser:gsub("%+", "%%+"), getCreationUser() .. string.rep(" ", #botUser - #getCreationUser()), 1)
+			header[8] = header[8]:gsub(botUser:gsub("%+", "%%+"), getCreationUser() .. string.rep(bg, #botUser - #getCreationUser()), 1)
 		elseif (botUser == '+' or botUser[#botUser] == '+') then
 			header[8] = header[8]:gsub(botUser:sub(1, #botUser - 1), getCreationUser():sub(1, #botUser - 1), 1)
 		else
-			header[8] = header[8]:gsub(botUser .. string.rep(" ", #getCreationUser() - #botUser), getCreationUser(), 1)
+			header[8] = header[8]:gsub(botUser .. string.rep(bg, #getCreationUser() - #botUser), getCreationUser(), 1)
 		end
 	end
 	return header

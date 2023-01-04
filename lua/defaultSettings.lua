@@ -36,7 +36,8 @@ local defaultSettings =
 	["comment"] = getDefaultComment,
 	["user"] = "marvin",
 	["countryCode"] = "fr",
-	["logoID"] = "42"
+	["logoID"] = "42",
+	["background"] = " "
 }
 
 local function getDefaultSetting(setting, env)
