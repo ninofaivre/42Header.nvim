@@ -4,6 +4,6 @@ function(opts)
 		print ("error too many args")
 		return
 	end
-	require('testNvimLuaPlugin').main(opts["fargs"][1])
+	require('42Header').main(opts["fargs"][1])
 end,
 {desc = '42Header', nargs = '*'})

@@ -45,14 +45,14 @@ local function genNewHeader()
 	{
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][1] + SELen)) .. env["logo"][1] .. comment["end"],
-		comment["start"] .. "   " .. fileName .. string.rep(" ", width - (#env["logo"][2] + #fileName + SELen + 3)) .. env["logo"][2] .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][3] + SELen)) .. env["logo"][3] .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#env["logo"][1] + SELen + 4)) .. env["logo"][1] .. "    " .. comment["end"],
+		comment["start"] .. "   " .. fileName .. string.rep(" ", width - (#env["logo"][2] + #fileName + SELen + 7)) .. env["logo"][2] .. "    " .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#env["logo"][3] + SELen + 4)) .. env["logo"][3] .. "    " .. comment["end"],
 		comment["start"] .. "   By: " .. topUser .. " <" .. mailUser .. "@" .. mailDomain .. ">"
-			.. string.rep(" ", (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 11))) .. env["logo"][4] .. comment["end"],
-		comment["start"] .. string.rep(" ", width - (#env["logo"][5] + SELen)) .. env["logo"][5] .. comment["end"],
-		comment["start"] .. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][6] + #time + #botUser + SELen + 16)) .. env["logo"][6] .. comment["end"],
-		comment["start"] .. "   Updated: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][7] + #time + #botUser + SELen + 16)) .. env["logo"][7] .. comment["end"],
+			.. string.rep(" ", (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 15))) .. env["logo"][4] .. "    " .. comment["end"],
+		comment["start"] .. string.rep(" ", width - (#env["logo"][5] + SELen + 4)) .. env["logo"][5] .. "    " .. comment["end"],
+		comment["start"] .. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][6] + #time + #botUser + SELen + 20)) .. env["logo"][6] .. "    " .. comment["end"],
+		comment["start"] .. "   Updated: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][7] + #time + #botUser + SELen + 20)) .. env["logo"][7] .. "    " .. comment["end"],
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
 		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
 	}

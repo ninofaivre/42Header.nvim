@@ -21,7 +21,7 @@ end
 -- commentTable
 
 local function getDefaultWidth(env)
-	local width = 43 + #env["logo"][1] + #env["comment"]["start"] + #env["comment"]["end"]
+	local width = 47 + #env["logo"][1] + #env["comment"]["start"] + #env["comment"]["end"]
 	return (width < 80) and 80 or width
 end
 
