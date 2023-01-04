@@ -35,15 +35,16 @@ local function genNewHeader()
 	local comment = env["comment"]
 	local width = env["width"]
 	local SELen = #comment["start"] + #comment["end"]
-	local fileName = lazy.utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 3))
+	local fileName = lazy.utils.shrink(vim.fn.expand("%:t"), width - (#env["logo"][2] + SELen + 7))
 	local time = os.date("%Y/%m/%d %H:%M:%S") .. ''
-	local mailUser = lazy.utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 11))
-	local mailDomain = lazy.utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 11))
-	local topUser = lazy.utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 11))
-	local botUser = lazy.utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 16))
+	local mailUser = lazy.utils.shrink(env["mailUser"], width - (#env["logo"][4] + #env["mailDomain"] + #env["user"] + SELen + 15))
+	local mailDomain = lazy.utils.shrink(env["mailDomain"], width - (#env["logo"][4] + #mailUser + #env["user"] + SELen + 15))
+	local topUser = lazy.utils.shrink(env["user"], width - (#env["logo"][4] + #mailUser + #mailDomain + SELen + 15))
+	local botUser = lazy.utils.shrink(env["user"], width - (#env["logo"][7] + #time + SELen + 20))
+	local topBotBorder = string.rep(comment["fill"] ~= "" and comment["fill"] or " ", width - (SELen + 2)):sub(1, width - (SELen + 2))
 	local header =
 	{
-		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
+		comment["start"] .. " " .. topBotBorder .. " " .. comment["end"],
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
 		comment["start"] .. string.rep(" ", width - (#env["logo"][1] + SELen + 4)) .. env["logo"][1] .. "    " .. comment["end"],
 		comment["start"] .. "   " .. fileName .. string.rep(" ", width - (#env["logo"][2] + #fileName + SELen + 7)) .. env["logo"][2] .. "    " .. comment["end"],
@@ -54,7 +55,7 @@ local function genNewHeader()
 		comment["start"] .. "   Created: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][6] + #time + #botUser + SELen + 20)) .. env["logo"][6] .. "    " .. comment["end"],
 		comment["start"] .. "   Updated: " .. time .. " by " .. botUser .. string.rep(" ", width - (#env["logo"][7] + #time + #botUser + SELen + 20)) .. env["logo"][7] .. "    " .. comment["end"],
 		comment["start"] .. string.rep(" ", width - SELen) .. comment["end"],
-		comment["start"] .. " " .. string.rep(comment["fill"], width - (SELen + 2)) .. " " .. comment["end"],
+		comment["start"] .. " " .. topBotBorder .. " " .. comment["end"],
 	}
 	if (isThereAHeader()) then
 		header[8] = header[8]:gsub(time, getCreationTime(), 1)

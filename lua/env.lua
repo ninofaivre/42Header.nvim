@@ -19,10 +19,14 @@ local function getComment(_, env)
 	return comment
 end
 
+local function getCommentEnvSetting(setting, env)
+	return env["comment"] and env["comment"]["env"] and env["comment"]["env"][setting]
+end
+
 local function getByChecker(V, env)
 	local args = lazy.utils.arrayTrimNil(
 	{
-		env["comment"]["env"] and env["comment"]["env"][V["var"]],
+		getCommentEnvSetting(V["var"], env),
 		lazy.userSettings.get(V["var"]),
 		unpack(V["fb"] or  {})
 	})
@@ -82,8 +86,28 @@ local logosTable =
 	}
 }
 
+local function isValidLogo(logo)
+	if (type(logo) ~= "table" or #logo ~= 7) then
+		return false
+	end
+	local size = #logo[1]
+	for _, v in ipairs(logo) do
+		if (type(v) ~= "string" or #v ~= size) then
+			return false
+		end
+	end
+	return true
+end
+
 local function getLogo(_, env)
-	local asciiLogo = lazy.utils.deepcopy(logosTable[env["logoID"]])
+	local asciiLogo = nil
+	for _, v in ipairs({ getCommentEnvSetting("logosTable", env) or {}, lazy.userSettings.get("logosTable") or {}, logosTable }) do
+		if (isValidLogo(v[env["logoID"]])) then
+			asciiLogo = lazy.utils.deepcopy(v[env["logoID"]])
+			break
+		end
+	end
+	asciiLogo = asciiLogo or lazy.utils.deepcopy(logosTable[lazy.defaultSettings.get("logoID")])
 	for k, v in ipairs(asciiLogo) do
 		asciiLogo[k] = v:gsub("CC", env["countryCode"])
 	end
@@ -91,8 +115,12 @@ local function getLogo(_, env)
 
 end
 
-local function isValidLogoID(logoID)
-	return logosTable[logoID] ~= nil
+local function isValidLogoID(logoID, env)
+	for _, v in ipairs({ getCommentEnvSetting("logosTable", env) or {}, lazy.userSettings.get("logosTable") or {}, logosTable }) do
+		if (v[logoID] ~= nil) then
+			return true
+		end
+	end
 end
 
 -- width --
