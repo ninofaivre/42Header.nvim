@@ -47,43 +47,43 @@ local logosTable =
 {
 	["42"] =
 	{
-		"        :::      ::::::::",
-		"      :+:      :+:    :+:",
-		"    +:+ +:+         +:+  ",
-		"  +#+  +:+       +#+     ",
-		"+#+#+#+#+#+   +#+        ",
-		"     #+#    #+#          ",
-		"    ###   ########.CC    "
+		"\\b\\b\\b\\b\\b\\b\\b\\b:::\\b\\b\\b\\b\\b\\b::::::::",
+		"\\b\\b\\b\\b\\b\\b:+:\\b\\b\\b\\b\\b\\b:+:\\b\\b\\b\\b:+:",
+		"\\b\\b\\b\\b+:+\\b+:+\\b\\b\\b\\b\\b\\b\\b\\b\\b+:+\\b\\b",
+		"\\b\\b+#+\\b\\b+:+\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b",
+		"+#+#+#+#+#+\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b\\b#+#\\b\\b\\b\\b#+#\\b\\b\\b\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b###\\b\\b\\b########.\\CC\\b\\b\\b\\b"
 	},
 	["1337"] =
 	{
-		"        :::   ::::::::   ::::::::  :::::::::::",
-		"     :+:+:   :+:    :+: :+:    :+: :+:     :+:",
-		"      +:+        +:+        +:+        +:+    ",
-		"     +#+      +#++:      +#++:        +#+     ",
-		"    +#+         +#+        +#+      +#+       ",
-		"   #+#  #+#    #+# #+#    #+#     #+#         ",
-		"####### ########   ########      ###.CC       ",
+		"\\b\\b\\b\\b\\b\\b\\b\\b:::\\b\\b\\b::::::::\\b\\b\\b::::::::\\b\\b:::::::::::",
+		"\\b\\b\\b\\b\\b:+:+:\\b\\b\\b:+:\\b\\b\\b\\b:+:\\b:+:\\b\\b\\b\\b:+:\\b:+:\\b\\b\\b\\b\\b:+:",
+		"\\b\\b\\b\\b\\b\\b+:+\\b\\b\\b\\b\\b\\b\\b\\b+:+\\b\\b\\b\\b\\b\\b\\b\\b+:+\\b\\b\\b\\b\\b\\b\\b\\b+:+\\b\\b\\b\\b",
+		"\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b+#++:\\b\\b\\b\\b\\b\\b+#++:\\b\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b#+#\\b\\b#+#\\b\\b\\b\\b#+#\\b#+#\\b\\b\\b\\b#+#\\b\\b\\b\\b\\b#+#\\b\\b\\b\\b\\b\\b\\b\\b\\b",
+		"#######\\b########\\b\\b\\b########\\b\\b\\b\\b\\b\\b###.\\CC\\b\\b\\b\\b\\b\\b\\b",
 	},
 	["19"] =
 	{
-		"        :::   ::::::::",
-		"     :+:+:  :+:    :+:",
-		"      +:+  +:+    +:+ ",
-		"     +#+   +#++:++#+  ",
-		"    +#+         +#+   ",
-		"   #+#  #+#    #+#    ",
-		"####### ########.CC   ",
+		"\\b\\b\\b\\b\\b\\b\\b\\b:::\\b\\b\\b::::::::",
+		"\\b\\b\\b\\b\\b:+:+:\\b\\b:+:\\b\\b\\b\\b:+:",
+		"\\b\\b\\b\\b\\b\\b+:+\\b\\b+:+\\b\\b\\b\\b+:+\\b",
+		"\\b\\b\\b\\b\\b+#+\\b\\b\\b+#++:++#+\\b\\b",
+		"\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b",
+		"\\b\\b\\b#+#\\b\\b#+#\\b\\b\\b\\b#+#\\b\\b\\b\\b",
+		"#######\\b########.\\CC\\b\\b\\b",
 	},
 	["21"] =
 	{
-		"       ::::::::    :::      ",
-		"     :+:    :+: :+:+:       ",
-		"          +:+    +:+        ",
-		"       +#+      +#+         ",
-		"    +#+        +#+          ",
-		"  #+#         #+#           ",
-		"########## #######-school.CC",
+		"\\b\\b\\b\\b\\b\\b\\b::::::::\\b\\b\\b\\b:::\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b\\b:+:\\b\\b\\b\\b:+:\\b:+:+:\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b\\b\\b\\b\\b\\b\\b+:+\\b\\b\\b\\b+:+\\b\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b+#+\\b\\b\\b\\b\\b\\b\\b\\b\\b\\b",
+		"\\b\\b#+#\\b\\b\\b\\b\\b\\b\\b\\b\\b#+#\\b\\b\\b\\b\\b\\b\\b\\b\\b\\b\\b",
+		"##########\\b#######-school.\\CC",
 	}
 }
 
@@ -91,9 +91,9 @@ local function isValidLogo(logo)
 	if (type(logo) ~= "table" or #logo ~= 7) then
 		return false
 	end
-	local size = #logo[1]
+	local size = #logo[1] - ({logo[1]:gsub("\\b", "")})[2] - ({logo[1]:gsub("\\CC", "")})[2]
 	for _, v in ipairs(logo) do
-		if (type(v) ~= "string" or #v ~= size) then
+		if (type(v) ~= "string" or (#v - ({v:gsub("\\b", "")})[2] - ({v:gsub("\\CC", "")})[2]) ~= size) then
 			return false
 		end
 	end
@@ -110,7 +110,7 @@ local function getLogo(_, env)
 	end
 	asciiLogo = asciiLogo or lazy.utils.deepcopy(logosTable[lazy.defaultSettings.get("logoID")])
 	for k, v in ipairs(asciiLogo) do
-		asciiLogo[k] = v:gsub("CC", env["countryCode"])
+		asciiLogo[k] = (v:gsub("\\CC", env["countryCode"])):gsub("\\b", env["background"])
 	end
 	return asciiLogo
 
@@ -137,7 +137,7 @@ local function isValidWidth (width, env)
 	if (type(width) ~= "number" or width == tonumber('NaN')) then
 		return false
 	end
-	return width >= (40 + #env.comment["start"] + #env.comment["end"] + #env.logo[1])
+	return width >= (41 + #env.comment["start"] + #env.comment["end"] + #env.logo[1])
 end
 
 -- width --
@@ -161,9 +161,9 @@ local function getEnv()
 		{ var = "comment", getter = getComment },
 		{ var = "countryCode", checker = isValidCountryCode },
 		{ var = "logoID", checker = isValidLogoID },
+		{ var = "background", checker = function (background) return type(background) == "string" and #background == 1 end },
 		{ var = "logo", getter = getLogo },
 		{ var = "width", checker = isValidWidth },
-		{ var = "background", checker = function (background) return type(background) == "string" and #background == 1 end },
 		{
 			var = "user",
 			checker = isValidUser,
