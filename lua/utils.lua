@@ -1,17 +1,5 @@
 local M = {}
 
-M.getUserSettingsStr = function ()
-	local toReturn = 'require("42Header").setup(\n{\n'
-	for _, v in ipairs({"user", "mail", "countryCode", "width", "logoID"}) do
-		if (require("userSettings").get()[v]) then
-			toReturn = toReturn .. '\t' .. v .. ' = ' .. tostring(require("userSettings").get()[v]) .. ',\n'
-		end
-	end
-	-- add print of commentTable
-	toReturn = toReturn .. '}'
-	return toReturn
-end
-
 local function deepcopy (orig)
 	local orig_type = type(orig)
 	local copy

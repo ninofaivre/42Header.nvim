@@ -32,7 +32,7 @@ local function getCreationUser ()
 end
 
 local function genNewHeader()
-	local env = require("env").get()
+	local env = lazy.env.get()
 	local bg = env["background"]
 	local comment = env["comment"]
 	local width = env["width"]
@@ -84,14 +84,23 @@ local function writeHeader(updateOnly)
 	end
 end
 
-local function print()
-	print("current user settings :\n", "\n" .. lazy.utils.getUserSettingsStr())
+local function printUserSettings()
+	print('vim.g["42Header"] =\n' .. vim.inspect(vim.g["42Header"]))
 end
 
-local function yank()
-	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. lazy.utils.getUserSettingsStr() .. '\n'
+local function yankUserSettings()
+	local currentSettings = '-- Awesome 42Header nvim plugin user settings :\n' .. 'vim.g["42Header"] =\n' .. vim.inspect(vim.g["42Header"]) .. '\n'
+	-- I feel dumb doing this by hand but can't find a way with lua pattern
+	local f = currentSettings:find("\n")
+	while f do
+		while currentSettings:sub(f + 1, f + 1) == " " and currentSettings:sub(f + 2, f + 2) == " " do
+			currentSettings = currentSettings:sub(0, f) .. "\t" .. currentSettings:sub(f + 3)
+			f = f + 1
+		end
+		f = currentSettings:find("\n", f + 1)
+	end
 	vim.fn.setreg('"', currentSettings)
-	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```') -- only work on linux
+	vim.fn.setreg('+', '```lua\n' .. currentSettings .. '```')
 	print ("current settings yanked")
 end
 
@@ -105,8 +114,8 @@ end
 
 return
 {
-	print = print,
-	yank = yank,
+	print = printUserSettings,
+	yank = yankUserSettings,
 	["42"] = easterEgg,
 	writeHeader = writeHeader,
 	updateOnly = updateOnly
