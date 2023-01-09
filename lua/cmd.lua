@@ -51,8 +51,7 @@ local function genNewHeader()
 		comment["start"] .. string.rep(bg, width - (#env["logo"][1] + SELen + 4)) .. env["logo"][1] .. string.rep(bg, 4) .. comment["end"],
 		comment["start"] .. string.rep(bg, 3) .. fileName .. string.rep(bg, width - (#env["logo"][2] + #fileName + SELen + 7)) .. env["logo"][2] .. string.rep(bg, 4) .. comment["end"],
 		comment["start"] .. string.rep(bg, width - (#env["logo"][3] + SELen + 4)) .. env["logo"][3] .. string.rep(bg, 4) .. comment["end"],
-		comment["start"] .. string.rep(bg, 3) .. "By:" .. bg .. topUser .. bg .. "<" .. mailUser .. "@" .. mailDomain .. ">"
-			.. string.rep(bg, (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 15))) .. env["logo"][4] .. string.rep(bg, 4) .. comment["end"],
+		comment["start"] .. string.rep(bg, 3) .. "By:" .. bg .. topUser .. bg .. "<" .. mailUser .. "@" .. mailDomain .. ">" .. string.rep(bg, (width - (#env["logo"][4] + #topUser + #mailUser + #mailDomain + SELen + 15))) .. env["logo"][4] .. string.rep(bg, 4) .. comment["end"],
 		comment["start"] .. string.rep(bg, width - (#env["logo"][5] + SELen + 4)) .. env["logo"][5] .. string.rep(bg, 4) .. comment["end"],
 		comment["start"] .. string.rep(bg, 3) .. "Created:" .. bg .. time .. bg .. "by" .. bg .. botUser .. string.rep(bg, width - (#env["logo"][6] + #time + #botUser + SELen + 20)) .. env["logo"][6] .. string.rep(bg, 4) .. comment["end"],
 		comment["start"] .. string.rep(bg, 3) .. "Updated:" .. bg .. time .. bg .. "by" .. bg .. botUser .. string.rep(bg, width - (#env["logo"][7] + #time + #botUser + SELen + 20)) .. env["logo"][7] .. string.rep(bg, 4) .. comment["end"],

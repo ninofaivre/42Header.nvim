@@ -128,7 +128,7 @@ local function isValidUser(user, env)
 	if (type(user) ~= "string") then
 		return false, nil
 	end
-	return true, user:gsub(lazy.utils.plainText(env["background"]), (env["background"] == " " and "." or " "))
+	return true, user:gsub(lazy.utils.plainText(env["background"]), (env["background"] == " " and "_" or " "))
 end
 
 -- width --
