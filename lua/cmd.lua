@@ -104,7 +104,7 @@ local function yankUserSettings()
 end
 
 local function easterEgg()
-	print("easter egg")
+	print("3 + 4 + 5 + 6 + 7 + 8 + 9")
 end
 
 local function updateOnly()
